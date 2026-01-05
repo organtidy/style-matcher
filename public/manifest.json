@@ -1,0 +1,17 @@
+{
+  "name": "Personal Stylist",
+  "short_name": "Stylist",
+  "description": "Gerencie seu guarda-roupa e receba sugestões de looks baseadas no clima",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0a0a0b",
+  "theme_color": "#0a0a0b",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "64x64",
+      "type": "image/x-icon"
+    }
+  ]
+}
