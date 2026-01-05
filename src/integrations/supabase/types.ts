@@ -14,7 +14,116 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      clothes: {
+        Row: {
+          ai_confidence: number | null
+          ai_detected_colors: string[] | null
+          category: string
+          created_at: string
+          description: string | null
+          id: string
+          image_url: string
+          last_worn: string | null
+          status: string
+          style_tags: string[] | null
+          sub_category: string | null
+          user_id: string | null
+          warmth_level: number
+        }
+        Insert: {
+          ai_confidence?: number | null
+          ai_detected_colors?: string[] | null
+          category: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url: string
+          last_worn?: string | null
+          status?: string
+          style_tags?: string[] | null
+          sub_category?: string | null
+          user_id?: string | null
+          warmth_level?: number
+        }
+        Update: {
+          ai_confidence?: number | null
+          ai_detected_colors?: string[] | null
+          category?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url?: string
+          last_worn?: string | null
+          status?: string
+          style_tags?: string[] | null
+          sub_category?: string | null
+          user_id?: string | null
+          warmth_level?: number
+        }
+        Relationships: []
+      }
+      laundry_log: {
+        Row: {
+          clothing_id: string
+          id: string
+          washed_at: string
+        }
+        Insert: {
+          clothing_id: string
+          id?: string
+          washed_at?: string
+        }
+        Update: {
+          clothing_id?: string
+          id?: string
+          washed_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "laundry_log_clothing_id_fkey"
+            columns: ["clothing_id"]
+            isOneToOne: false
+            referencedRelation: "clothes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      weather_cache: {
+        Row: {
+          api_response: Json | null
+          condition: string
+          description: string | null
+          fetched_at: string
+          icon: string | null
+          id: string
+          location: string | null
+          temperature: number
+          user_id: string | null
+        }
+        Insert: {
+          api_response?: Json | null
+          condition: string
+          description?: string | null
+          fetched_at?: string
+          icon?: string | null
+          id?: string
+          location?: string | null
+          temperature: number
+          user_id?: string | null
+        }
+        Update: {
+          api_response?: Json | null
+          condition?: string
+          description?: string | null
+          fetched_at?: string
+          icon?: string | null
+          id?: string
+          location?: string | null
+          temperature?: number
+          user_id?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
