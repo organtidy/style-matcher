@@ -15,37 +15,48 @@ const slotTypeToCategories: Record<SlotType, ClothingCategory[]> = {
   'accessory-right': ['accessory'],
 };
 
+export type LookId = 'A' | 'B' | 'C' | 'D';
+
 interface WardrobeState {
   clothes: ClothingItem[];
   lookA: ClothingItem[];
   lookB: ClothingItem[];
+  lookC: ClothingItem[];
+  lookD: ClothingItem[];
+  visibleLooks: LookId[];
   weather: typeof mockWeather;
   selectedLaundryItems: string[];
   wardrobePickerOpen: boolean;
-  wardrobePickerLook: 'A' | 'B' | null;
+  wardrobePickerLook: LookId | null;
   wardrobePickerSlot: SlotType | null;
   
   // Actions
   initializeLooks: () => void;
   moveToDirty: (ids: string[]) => void;
   moveToClean: (ids: string[]) => void;
-  removeFromLook: (lookId: 'A' | 'B', itemId: string) => void;
-  swapItem: (fromLook: 'A' | 'B', toLook: 'A' | 'B', itemId: string) => void;
+  removeFromLook: (lookId: LookId, itemId: string) => void;
+  swapItem: (fromLook: LookId, toLook: LookId, itemId: string) => void;
   toggleLaundrySelection: (id: string) => void;
   clearLaundrySelection: () => void;
-  confirmLook: (lookId: 'A' | 'B') => void;
+  confirmLook: (lookId: LookId) => void;
   addClothing: (item: ClothingItem) => void;
   getDirtyClothes: () => ClothingItem[];
-  openWardrobePicker: (lookId: 'A' | 'B', slotType: SlotType) => void;
+  openWardrobePicker: (lookId: LookId, slotType: SlotType) => void;
   closeWardrobePicker: () => void;
-  addToLook: (lookId: 'A' | 'B', item: ClothingItem) => void;
-  getAvailableItemsForSlot: (slotType: SlotType, lookId: 'A' | 'B') => ClothingItem[];
+  addToLook: (lookId: LookId, item: ClothingItem) => void;
+  getAvailableItemsForSlot: (slotType: SlotType, lookId: LookId) => ClothingItem[];
+  addLook: (lookId: LookId) => void;
+  removeLook: (lookId: LookId) => void;
+  getLook: (lookId: LookId) => ClothingItem[];
 }
 
 export const useWardrobeStore = create<WardrobeState>((set, get) => ({
   clothes: mockClothingItems,
   lookA: [],
   lookB: [],
+  lookC: [],
+  lookD: [],
+  visibleLooks: ['A', 'B'] as LookId[],
   weather: mockWeather,
   selectedLaundryItems: [],
   wardrobePickerOpen: false,
@@ -55,7 +66,28 @@ export const useWardrobeStore = create<WardrobeState>((set, get) => ({
   initializeLooks: () => {
     const { clothes } = get();
     const { lookA, lookB } = generateMockLooks(clothes);
-    set({ lookA, lookB });
+    set({ lookA, lookB, lookC: [], lookD: [] });
+  },
+  
+  getLook: (lookId: LookId) => {
+    const state = get();
+    const lookMap = { A: state.lookA, B: state.lookB, C: state.lookC, D: state.lookD };
+    return lookMap[lookId];
+  },
+
+  addLook: (lookId: LookId) => {
+    set((state) => ({
+      visibleLooks: state.visibleLooks.includes(lookId) 
+        ? state.visibleLooks 
+        : [...state.visibleLooks, lookId],
+    }));
+  },
+
+  removeLook: (lookId: LookId) => {
+    set((state) => ({
+      visibleLooks: state.visibleLooks.filter(l => l !== lookId),
+      [lookId === 'A' ? 'lookA' : lookId === 'B' ? 'lookB' : lookId === 'C' ? 'lookC' : 'lookD']: [],
+    }));
   },
 
   moveToDirty: (ids: string[]) => {
@@ -79,19 +111,24 @@ export const useWardrobeStore = create<WardrobeState>((set, get) => ({
     }));
   },
 
-  removeFromLook: (lookId: 'A' | 'B', itemId: string) => {
-    set((state) => ({
-      [lookId === 'A' ? 'lookA' : 'lookB']: 
-        (lookId === 'A' ? state.lookA : state.lookB).filter(item => item.id !== itemId),
-    }));
+  removeFromLook: (lookId: LookId, itemId: string) => {
+    set((state) => {
+      const lookKey = `look${lookId}` as 'lookA' | 'lookB' | 'lookC' | 'lookD';
+      const currentLook = state[lookKey];
+      return {
+        [lookKey]: currentLook.filter(item => item.id !== itemId),
+      };
+    });
   },
 
-  swapItem: (fromLook: 'A' | 'B', toLook: 'A' | 'B', itemId: string) => {
+  swapItem: (fromLook: LookId, toLook: LookId, itemId: string) => {
     if (fromLook === toLook) return;
     
     set((state) => {
-      const sourceLook = fromLook === 'A' ? state.lookA : state.lookB;
-      const targetLook = toLook === 'A' ? state.lookA : state.lookB;
+      const fromKey = `look${fromLook}` as 'lookA' | 'lookB' | 'lookC' | 'lookD';
+      const toKey = `look${toLook}` as 'lookA' | 'lookB' | 'lookC' | 'lookD';
+      const sourceLook = state[fromKey];
+      const targetLook = state[toKey];
       
       const item = sourceLook.find(i => i.id === itemId);
       if (!item) return state;
@@ -109,8 +146,8 @@ export const useWardrobeStore = create<WardrobeState>((set, get) => ({
       }
 
       return {
-        lookA: fromLook === 'A' ? newSourceLook : (toLook === 'A' ? newTargetLook : state.lookA),
-        lookB: fromLook === 'B' ? newSourceLook : (toLook === 'B' ? newTargetLook : state.lookB),
+        [fromKey]: newSourceLook,
+        [toKey]: newTargetLook,
       };
     });
   },
@@ -127,13 +164,13 @@ export const useWardrobeStore = create<WardrobeState>((set, get) => ({
     set({ selectedLaundryItems: [] });
   },
 
-  confirmLook: (lookId: 'A' | 'B') => {
+  confirmLook: (lookId: LookId) => {
     const state = get();
-    const look = lookId === 'A' ? state.lookA : state.lookB;
+    const look = state.getLook(lookId);
     const ids = look.map(item => item.id);
     
     state.moveToDirty(ids);
-    state.initializeLooks();
+    state.removeLook(lookId);
   },
 
   addClothing: (item: ClothingItem) => {
@@ -146,7 +183,7 @@ export const useWardrobeStore = create<WardrobeState>((set, get) => ({
     return get().clothes.filter(c => c.status === 'dirty');
   },
 
-  openWardrobePicker: (lookId: 'A' | 'B', slotType: SlotType) => {
+  openWardrobePicker: (lookId: LookId, slotType: SlotType) => {
     set({ wardrobePickerOpen: true, wardrobePickerLook: lookId, wardrobePickerSlot: slotType });
   },
 
@@ -154,9 +191,10 @@ export const useWardrobeStore = create<WardrobeState>((set, get) => ({
     set({ wardrobePickerOpen: false, wardrobePickerLook: null, wardrobePickerSlot: null });
   },
 
-  addToLook: (lookId: 'A' | 'B', item: ClothingItem) => {
+  addToLook: (lookId: LookId, item: ClothingItem) => {
     set((state) => {
-      const look = lookId === 'A' ? state.lookA : state.lookB;
+      const lookKey = `look${lookId}` as 'lookA' | 'lookB' | 'lookC' | 'lookD';
+      const look = state[lookKey];
       
       // Check if item already in the look
       if (look.some(i => i.id === item.id)) return state;
@@ -165,7 +203,7 @@ export const useWardrobeStore = create<WardrobeState>((set, get) => ({
       const filteredLook = look.filter(i => i.category !== item.category);
       
       return {
-        [lookId === 'A' ? 'lookA' : 'lookB']: [...filteredLook, item],
+        [lookKey]: [...filteredLook, item],
         wardrobePickerOpen: false,
         wardrobePickerLook: null,
         wardrobePickerSlot: null,
@@ -173,10 +211,10 @@ export const useWardrobeStore = create<WardrobeState>((set, get) => ({
     });
   },
 
-  getAvailableItemsForSlot: (slotType: SlotType, lookId: 'A' | 'B') => {
+  getAvailableItemsForSlot: (slotType: SlotType, lookId: LookId) => {
     const state = get();
     const acceptedCategories = slotTypeToCategories[slotType];
-    const currentLook = lookId === 'A' ? state.lookA : state.lookB;
+    const currentLook = state.getLook(lookId);
     const usedIds = currentLook.map(i => i.id);
     
     return state.clothes.filter(item => 

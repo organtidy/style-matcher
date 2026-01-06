@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { useWardrobeStore } from '@/store/wardrobeStore';
+import { useWardrobeStore, LookId } from '@/store/wardrobeStore';
 import { WeatherWidget } from '@/components/WeatherWidget';
 import { DuelMode } from '@/components/DuelMode';
 import { motion } from 'framer-motion';
@@ -13,6 +13,9 @@ const Index = () => {
   const {
     lookA,
     lookB,
+    lookC,
+    lookD,
+    visibleLooks,
     weather,
     initializeLooks,
     removeFromLook,
@@ -25,13 +28,15 @@ const Index = () => {
     wardrobePickerSlot,
     getAvailableItemsForSlot,
     addToLook,
+    addLook,
+    removeLook,
   } = useWardrobeStore();
 
   useEffect(() => {
     initializeLooks();
   }, [initializeLooks]);
 
-  const handleConfirmLook = (lookId: 'A' | 'B') => {
+  const handleConfirmLook = (lookId: LookId) => {
     confirmLook(lookId);
     toast.success(`Look ${lookId} confirmado! Peças movidas para lavanderia.`, {
       icon: '👔',
@@ -55,6 +60,14 @@ const Index = () => {
     'accessory-left': 'Pulseira / Relógio',
     'accessory-right': 'Brinco / Colar / Jóias',
   };
+
+  // Build looks array for DuelMode
+  const looks = [
+    { id: 'A' as LookId, items: lookA },
+    { id: 'B' as LookId, items: lookB },
+    ...(visibleLooks.includes('C') ? [{ id: 'C' as LookId, items: lookC }] : []),
+    ...(visibleLooks.includes('D') ? [{ id: 'D' as LookId, items: lookD }] : []),
+  ];
 
   return (
     <div className="page-container">
@@ -85,15 +98,14 @@ const Index = () => {
         </p>
 
         <DuelMode
-          lookA={lookA}
-          lookB={lookB}
-          onRemoveFromA={(id) => removeFromLook('A', id)}
-          onRemoveFromB={(id) => removeFromLook('B', id)}
-          onAddToA={(slotType) => openWardrobePicker('A', slotType)}
-          onAddToB={(slotType) => openWardrobePicker('B', slotType)}
-          onConfirmA={() => handleConfirmLook('A')}
-          onConfirmB={() => handleConfirmLook('B')}
+          looks={looks}
+          visibleLooks={visibleLooks}
+          onRemoveFromLook={removeFromLook}
+          onAddToLook={openWardrobePicker}
+          onConfirmLook={handleConfirmLook}
           onSwapItem={swapItem}
+          onAddLook={addLook}
+          onRemoveLook={removeLook}
         />
       </motion.div>
 
