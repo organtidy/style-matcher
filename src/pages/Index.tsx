@@ -3,11 +3,12 @@ import { useWardrobeStore, LookId } from '@/store/wardrobeStore';
 import { WeatherWidget } from '@/components/WeatherWidget';
 import { DuelMode } from '@/components/DuelMode';
 import { motion } from 'framer-motion';
-import { Sparkles, RefreshCw } from 'lucide-react';
+import { Sparkles, RefreshCw, MapPin, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { useWeather } from '@/hooks/useWeather';
 
 const Index = () => {
   const {
@@ -16,7 +17,6 @@ const Index = () => {
     lookC,
     lookD,
     visibleLooks,
-    weather,
     initializeLooks,
     removeFromLook,
     confirmLook,
@@ -31,6 +31,8 @@ const Index = () => {
     addLook,
     removeLook,
   } = useWardrobeStore();
+
+  const { weather, location, loading: weatherLoading, error: weatherError, refresh: refreshWeather } = useWeather();
 
   useEffect(() => {
     initializeLooks();
@@ -76,7 +78,37 @@ const Index = () => {
         animate={{ opacity: 1, y: 0 }}
         className="space-y-4"
       >
-        <WeatherWidget weather={weather} />
+        {weatherLoading ? (
+          <div className="weather-widget weather-gradient flex items-center justify-center gap-2">
+            <Loader2 className="w-5 h-5 animate-spin text-primary" />
+            <span className="text-muted-foreground text-sm">Buscando clima...</span>
+          </div>
+        ) : weather ? (
+          <div className="relative">
+            <WeatherWidget weather={weather} />
+            {location && (
+              <div className="flex items-center gap-1 text-xs text-muted-foreground mt-1">
+                <MapPin className="w-3 h-3" />
+                <span>{location}</span>
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="h-5 w-5 ml-1"
+                  onClick={refreshWeather}
+                >
+                  <RefreshCw className="w-3 h-3" />
+                </Button>
+              </div>
+            )}
+          </div>
+        ) : weatherError ? (
+          <div className="weather-widget weather-gradient">
+            <span className="text-sm text-destructive">{weatherError}</span>
+            <Button variant="ghost" size="sm" onClick={refreshWeather}>
+              Tentar novamente
+            </Button>
+          </div>
+        ) : null}
 
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
