@@ -1,13 +1,16 @@
 import { ClothingItem, ClothingCategory } from '@/types/clothing';
 import { useDroppable } from '@dnd-kit/core';
 import { Button } from '@/components/ui/button';
-import { Check, X, User } from 'lucide-react';
+import { Check, X, User, Plus } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 
 // Slot types for the mannequin
 type SlotType = 'head' | 'top' | 'bottom' | 'shoes' | 'accessory-left' | 'accessory-right';
+
+// Export SlotType for external use
+export type { SlotType };
 
 // Map category to slot
 const categoryToSlot: Record<ClothingCategory, SlotType> = {
@@ -92,12 +95,13 @@ interface DroppableSlotProps {
   slotType: SlotType;
   item?: ClothingItem;
   onRemoveItem: (itemId: string) => void;
+  onAddItem: (slotType: SlotType) => void;
   activeId?: string | null;
   activeCategory?: ClothingCategory | null;
   label: string;
 }
 
-function DroppableSlot({ slotId, slotType, item, onRemoveItem, activeId, activeCategory, label }: DroppableSlotProps) {
+function DroppableSlot({ slotId, slotType, item, onRemoveItem, onAddItem, activeId, activeCategory, label }: DroppableSlotProps) {
   const { setNodeRef, isOver } = useDroppable({ 
     id: slotId,
     data: { slotType, acceptedCategories: slotCategories[slotType] }
@@ -121,7 +125,7 @@ function DroppableSlot({ slotId, slotType, item, onRemoveItem, activeId, activeC
             ? 'border-destructive bg-destructive/10'
             : item 
               ? 'border-transparent' 
-              : 'border-muted-foreground/30 bg-muted/20'
+              : 'border-muted-foreground/30 bg-muted/20 hover:border-primary/50 hover:bg-primary/10 cursor-pointer'
       } ${
         isAccessorySlot 
           ? 'w-16 h-16' 
@@ -129,6 +133,11 @@ function DroppableSlot({ slotId, slotType, item, onRemoveItem, activeId, activeC
             ? 'w-20 h-20 mx-auto' 
             : 'w-full aspect-square'
       }`}
+      onClick={() => {
+        if (!item) {
+          onAddItem(slotType);
+        }
+      }}
     >
       {item ? (
         <DraggableSlotItem
@@ -138,9 +147,12 @@ function DroppableSlot({ slotId, slotType, item, onRemoveItem, activeId, activeC
           isDragging={activeId === item.id}
         />
       ) : (
-        <span className="text-[10px] text-muted-foreground/50 text-center px-1">
-          {label}
-        </span>
+        <div className="flex flex-col items-center justify-center gap-1">
+          <Plus className="w-4 h-4 text-muted-foreground/50" />
+          <span className="text-[10px] text-muted-foreground/50 text-center px-1">
+            {label}
+          </span>
+        </div>
       )}
     </div>
   );
@@ -151,6 +163,7 @@ interface ManequimLookCardProps {
   title: string;
   items: ClothingItem[];
   onRemoveItem: (itemId: string) => void;
+  onAddItem: (slotType: SlotType) => void;
   onConfirm: () => void;
   activeId?: string | null;
   activeCategory?: ClothingCategory | null;
@@ -161,6 +174,7 @@ export function ManequimLookCard({
   title, 
   items, 
   onRemoveItem, 
+  onAddItem,
   onConfirm, 
   activeId,
   activeCategory 
@@ -213,6 +227,7 @@ export function ManequimLookCard({
           slotType="head"
           item={headItem}
           onRemoveItem={onRemoveItem}
+          onAddItem={onAddItem}
           activeId={activeId}
           activeCategory={activeCategory}
           label="Boné"
@@ -225,6 +240,7 @@ export function ManequimLookCard({
             slotType="accessory-left"
             item={leftAccessory}
             onRemoveItem={onRemoveItem}
+            onAddItem={onAddItem}
             activeId={activeId}
             activeCategory={activeCategory}
             label="Pulso"
@@ -236,6 +252,7 @@ export function ManequimLookCard({
               slotType="top"
               item={topItem}
               onRemoveItem={onRemoveItem}
+              onAddItem={onAddItem}
               activeId={activeId}
               activeCategory={activeCategory}
               label="Camisa"
@@ -247,6 +264,7 @@ export function ManequimLookCard({
             slotType="accessory-right"
             item={rightAccessory}
             onRemoveItem={onRemoveItem}
+            onAddItem={onAddItem}
             activeId={activeId}
             activeCategory={activeCategory}
             label="Jóias"
@@ -263,6 +281,7 @@ export function ManequimLookCard({
               slotType="bottom"
               item={bottomItem}
               onRemoveItem={onRemoveItem}
+              onAddItem={onAddItem}
               activeId={activeId}
               activeCategory={activeCategory}
               label="Calça"
@@ -279,6 +298,7 @@ export function ManequimLookCard({
             slotType="shoes"
             item={shoesItem}
             onRemoveItem={onRemoveItem}
+            onAddItem={onAddItem}
             activeId={activeId}
             activeCategory={activeCategory}
             label="Calçado"
