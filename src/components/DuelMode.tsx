@@ -11,7 +11,7 @@ import {
   closestCenter,
 } from '@dnd-kit/core';
 import { ClothingItem, ClothingCategory } from '@/types/clothing';
-import { ManequimLookCard } from './ManequimLookCard';
+import { ManequimLookCard, SlotType } from './ManequimLookCard';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 
@@ -39,6 +39,8 @@ interface DuelModeProps {
   lookB: ClothingItem[];
   onRemoveFromA: (itemId: string) => void;
   onRemoveFromB: (itemId: string) => void;
+  onAddToA: (slotType: SlotType) => void;
+  onAddToB: (slotType: SlotType) => void;
   onConfirmA: () => void;
   onConfirmB: () => void;
   onSwapItem: (fromLook: 'A' | 'B', toLook: 'A' | 'B', itemId: string) => void;
@@ -49,6 +51,8 @@ export function DuelMode({
   lookB,
   onRemoveFromA,
   onRemoveFromB,
+  onAddToA,
+  onAddToB,
   onConfirmA,
   onConfirmB,
   onSwapItem,
@@ -155,6 +159,7 @@ export function DuelMode({
           title="Look A"
           items={lookA}
           onRemoveItem={onRemoveFromA}
+          onAddItem={onAddToA}
           onConfirm={onConfirmA}
           activeId={activeId}
           activeCategory={activeCategory}
@@ -164,6 +169,7 @@ export function DuelMode({
           title="Look B"
           items={lookB}
           onRemoveItem={onRemoveFromB}
+          onAddItem={onAddToB}
           onConfirm={onConfirmB}
           activeId={activeId}
           activeCategory={activeCategory}

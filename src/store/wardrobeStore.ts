@@ -1,6 +1,19 @@
 import { create } from 'zustand';
-import { ClothingItem, Look } from '@/types/clothing';
+import { ClothingItem, Look, ClothingCategory } from '@/types/clothing';
 import { mockClothingItems, generateMockLooks, mockWeather } from '@/data/mockClothing';
+
+// SlotType matching the ManequimLookCard
+type SlotType = 'head' | 'top' | 'bottom' | 'shoes' | 'accessory-left' | 'accessory-right';
+
+// Map slot type to accepted categories
+const slotTypeToCategories: Record<SlotType, ClothingCategory[]> = {
+  'head': ['accessory'],
+  'top': ['top', 'outerwear'],
+  'bottom': ['bottom'],
+  'shoes': ['shoes'],
+  'accessory-left': ['accessory'],
+  'accessory-right': ['accessory'],
+};
 
 interface WardrobeState {
   clothes: ClothingItem[];
@@ -8,6 +21,9 @@ interface WardrobeState {
   lookB: ClothingItem[];
   weather: typeof mockWeather;
   selectedLaundryItems: string[];
+  wardrobePickerOpen: boolean;
+  wardrobePickerLook: 'A' | 'B' | null;
+  wardrobePickerSlot: SlotType | null;
   
   // Actions
   initializeLooks: () => void;
@@ -20,6 +36,10 @@ interface WardrobeState {
   confirmLook: (lookId: 'A' | 'B') => void;
   addClothing: (item: ClothingItem) => void;
   getDirtyClothes: () => ClothingItem[];
+  openWardrobePicker: (lookId: 'A' | 'B', slotType: SlotType) => void;
+  closeWardrobePicker: () => void;
+  addToLook: (lookId: 'A' | 'B', item: ClothingItem) => void;
+  getAvailableItemsForSlot: (slotType: SlotType, lookId: 'A' | 'B') => ClothingItem[];
 }
 
 export const useWardrobeStore = create<WardrobeState>((set, get) => ({
@@ -28,6 +48,9 @@ export const useWardrobeStore = create<WardrobeState>((set, get) => ({
   lookB: [],
   weather: mockWeather,
   selectedLaundryItems: [],
+  wardrobePickerOpen: false,
+  wardrobePickerLook: null,
+  wardrobePickerSlot: null,
 
   initializeLooks: () => {
     const { clothes } = get();
@@ -121,5 +144,45 @@ export const useWardrobeStore = create<WardrobeState>((set, get) => ({
 
   getDirtyClothes: () => {
     return get().clothes.filter(c => c.status === 'dirty');
+  },
+
+  openWardrobePicker: (lookId: 'A' | 'B', slotType: SlotType) => {
+    set({ wardrobePickerOpen: true, wardrobePickerLook: lookId, wardrobePickerSlot: slotType });
+  },
+
+  closeWardrobePicker: () => {
+    set({ wardrobePickerOpen: false, wardrobePickerLook: null, wardrobePickerSlot: null });
+  },
+
+  addToLook: (lookId: 'A' | 'B', item: ClothingItem) => {
+    set((state) => {
+      const look = lookId === 'A' ? state.lookA : state.lookB;
+      
+      // Check if item already in the look
+      if (look.some(i => i.id === item.id)) return state;
+      
+      // Remove existing item of same category from look
+      const filteredLook = look.filter(i => i.category !== item.category);
+      
+      return {
+        [lookId === 'A' ? 'lookA' : 'lookB']: [...filteredLook, item],
+        wardrobePickerOpen: false,
+        wardrobePickerLook: null,
+        wardrobePickerSlot: null,
+      };
+    });
+  },
+
+  getAvailableItemsForSlot: (slotType: SlotType, lookId: 'A' | 'B') => {
+    const state = get();
+    const acceptedCategories = slotTypeToCategories[slotType];
+    const currentLook = lookId === 'A' ? state.lookA : state.lookB;
+    const usedIds = currentLook.map(i => i.id);
+    
+    return state.clothes.filter(item => 
+      item.status === 'clean' && 
+      acceptedCategories.includes(item.category) &&
+      !usedIds.includes(item.id)
+    );
   },
 }));
