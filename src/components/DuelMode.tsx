@@ -153,8 +153,8 @@ export function DuelMode({
       onDragEnd={handleDragEnd}
     >
       <div className="space-y-4">
-        {/* Row 1: Look A and B */}
-        <div className="flex gap-3 w-full">
+        {/* Row 1: Look A and B - column on mobile, row on desktop */}
+        <div className="flex flex-col md:flex-row gap-3 w-full">
           {looks.filter(l => l.id === 'A' || l.id === 'B').map(look => (
             <ManequimLookCard
               key={look.id}
@@ -170,8 +170,8 @@ export function DuelMode({
           ))}
         </div>
 
-        {/* Add buttons for C and D */}
-        <div className="flex gap-3 w-full">
+        {/* Add buttons for C and D - column on mobile, row on desktop */}
+        <div className="flex flex-col md:flex-row gap-3 w-full">
           {/* Button under Look A to add Look C */}
           <div className="flex-1">
             {canAddC ? (
