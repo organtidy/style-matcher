@@ -4,6 +4,8 @@ export type AccessorySubCategory = 'bone' | 'brinco' | 'pulseira' | 'relogio' | 
 
 export type ClothingStatus = 'clean' | 'dirty';
 
+export type ClothingOccasion = 'casual' | 'especiais' | 'diario' | 'trabalho';
+
 export interface ClothingItem {
   id: string;
   image_url: string;
@@ -13,6 +15,7 @@ export interface ClothingItem {
   last_worn: string | null;
   category: ClothingCategory;
   sub_category?: AccessorySubCategory;
+  occasion?: ClothingOccasion;
   status: ClothingStatus;
   created_at: string;
 }

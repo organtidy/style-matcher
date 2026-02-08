@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react';
 import { useWardrobeStore } from '@/store/wardrobeStore';
-import { ClothingCategory, AccessorySubCategory, ClothingItem } from '@/types/clothing';
+import { ClothingCategory, AccessorySubCategory, ClothingItem, ClothingOccasion } from '@/types/clothing';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { motion } from 'framer-motion';
 import { Camera, Upload as UploadIcon, Sparkles, X } from 'lucide-react';
 import { toast } from 'sonner';
+import { OccasionSelector } from '@/components/OccasionSelector';
 
 const categories: { value: ClothingCategory; label: string }[] = [
   { value: 'top', label: 'Parte de Cima' },
@@ -46,6 +47,7 @@ export default function UploadPage() {
   const [warmthLevel, setWarmthLevel] = useState<number>(2);
   const [styleTags, setStyleTags] = useState<string>('');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [occasion, setOccasion] = useState<ClothingOccasion | null>(null);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -87,6 +89,7 @@ export default function UploadPage() {
       last_worn: null,
       category: category as ClothingCategory,
       sub_category: category === 'accessory' ? (subCategory as AccessorySubCategory) : undefined,
+      occasion: occasion ?? undefined,
       status: 'clean',
       created_at: new Date().toISOString(),
     };
@@ -101,6 +104,7 @@ export default function UploadPage() {
     setDescription('');
     setWarmthLevel(2);
     setStyleTags('');
+    setOccasion(null);
   };
 
   const clearImage = () => {
@@ -165,6 +169,16 @@ export default function UploadPage() {
             </label>
           )}
         </div>
+
+        {/* Occasion Selector */}
+        <OccasionSelector
+          selected={occasion}
+          onSelect={setOccasion}
+          title="Ocasiões"
+        />
+        <p className="text-xs text-muted-foreground -mt-1">
+          {occasion ? `Peça será categorizada como "${occasion}"` : 'Sem seleção — a IA categorizará automaticamente'}
+        </p>
 
         {/* Form Fields */}
         <div className="space-y-4">

@@ -30,6 +30,13 @@ interface RequestBody {
   numberOfLooks?: number;
 }
 
+const occasionLabels: Record<string, string> = {
+  casual: 'Casual',
+  especiais: 'Especiais',
+  diario: 'Dia a dia',
+  trabalho: 'Trabalho',
+};
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -95,6 +102,11 @@ ${occasion}
 5. Combine estilos compatíveis (use as style_tags)
 6. NÃO repita peças entre os looks diferentes
 7. Explique brevemente por que cada combinação funciona
+${occasion === 'especiais' ? `8. IMPORTANTE: Como esta é uma ocasião especial, sugira um vinho ideal para acompanhar o momento. Considere a temperatura atual (${weather.temperature}°C) para recomendar:
+   - Se temp < 18°C: vinho tinto encorpado
+   - Se temp 18-25°C: vinho tinto médio ou branco encorpado
+   - Se temp > 25°C: vinho branco, rosé ou espumante
+   Inclua o NOME EXATO do vinho e a SAFRA recomendada.` : ''}
 
 ## FORMATO DE RESPOSTA (JSON)
 {
@@ -105,7 +117,12 @@ ${occasion}
       "explanation": "Por que este look funciona para o clima e ocasião"
     }
   ],
-  "tips": "Dica geral de estilo para o dia"
+  "tips": "Dica geral de estilo para o dia"${occasion === 'especiais' ? `,
+  "wine": {
+    "name": "Nome do vinho",
+    "vintage": "Safra (ano)",
+    "reason": "Por que combina com a ocasião e temperatura"
+  }` : ''}
 }
 
 Responda APENAS com o JSON, sem texto adicional.`;
@@ -174,6 +191,7 @@ Responda APENAS com o JSON, sem texto adicional.`;
         success: true,
         looks: looksWithItems,
         tips: parsedLooks.tips,
+        wine: parsedLooks.wine || null,
         weather,
         generatedAt: new Date().toISOString()
       }),
