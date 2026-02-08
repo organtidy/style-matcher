@@ -1,7 +1,8 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useWardrobeStore, LookId } from '@/store/wardrobeStore';
 import { WeatherWidget } from '@/components/WeatherWidget';
 import { DuelMode } from '@/components/DuelMode';
+import { OccasionSelector } from '@/components/OccasionSelector';
 import { motion } from 'framer-motion';
 import { Sparkles, RefreshCw, MapPin, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -9,6 +10,7 @@ import { toast } from 'sonner';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useWeather } from '@/hooks/useWeather';
+import { ClothingOccasion } from '@/types/clothing';
 
 const Index = () => {
   const {
@@ -33,6 +35,7 @@ const Index = () => {
   } = useWardrobeStore();
 
   const { weather, location, loading: weatherLoading, error: weatherError, refresh: refreshWeather } = useWeather();
+  const [selectedOccasion, setSelectedOccasion] = useState<ClothingOccasion | null>('trabalho');
 
   useEffect(() => {
     initializeLooks();
@@ -110,10 +113,22 @@ const Index = () => {
           </div>
         ) : null}
 
+        {/* Occasion Filter */}
+        <OccasionSelector
+          selected={selectedOccasion}
+          onSelect={setSelectedOccasion}
+          title="Ocasiões"
+        />
+
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Sparkles className="w-5 h-5 text-primary" />
-            <h2 className="section-title">Sugestões de Hoje</h2>
+            <h2 className="section-title">
+              {selectedOccasion 
+                ? `Looks — ${selectedOccasion.charAt(0).toUpperCase() + selectedOccasion.slice(1)}`
+                : 'Sugestões de Hoje'
+              }
+            </h2>
           </div>
           <Button
             variant="ghost"
