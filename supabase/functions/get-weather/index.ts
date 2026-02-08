@@ -54,10 +54,15 @@ serve(async (req) => {
       api_response: data,
     };
 
-    // Optionally save to cache
+    // Save to cache using upsert by location to prevent bloat on free tier
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
+
+    // Delete old cache for this location, then insert fresh
+    await supabase.from('weather_cache')
+      .delete()
+      .eq('location', weatherResult.location);
 
     await supabase.from('weather_cache').insert({
       temperature: weatherResult.temperature,
@@ -66,6 +71,7 @@ serve(async (req) => {
       icon: weatherResult.icon,
       location: weatherResult.location,
       api_response: weatherResult.api_response,
+      fetched_at: new Date().toISOString(),
     });
 
     return new Response(JSON.stringify(weatherResult), {

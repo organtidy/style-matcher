@@ -28,16 +28,14 @@ export function useWeather() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchWeatherByCoords = useCallback(async (lat: number, lon: number) => {
+  const fetchWeather = useCallback(async (body: { lat?: number; lon?: number; city?: string }) => {
     try {
       setLoading(true);
       setError(null);
       
-      console.log('Fetching weather for coords:', lat, lon);
+      console.log('Fetching weather:', body);
       
-      const { data, error: fnError } = await supabase.functions.invoke('get-weather', {
-        body: { lat, lon }
-      });
+      const { data, error: fnError } = await supabase.functions.invoke('get-weather', { body });
 
       if (fnError) {
         throw new Error(fnError.message || 'Erro ao buscar clima');
@@ -54,45 +52,7 @@ export function useWeather() {
 
       setWeather(weatherData);
       setLocation(apiData.location);
-      console.log('Weather fetched successfully:', weatherData, 'Location:', apiData.location);
-      
-      return weatherData;
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Erro desconhecido';
-      console.error('Error fetching weather:', message);
-      setError(message);
-      return null;
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  const fetchWeatherByCity = useCallback(async (city: string) => {
-    try {
-      setLoading(true);
-      setError(null);
-      
-      console.log('Fetching weather for city:', city);
-      
-      const { data, error: fnError } = await supabase.functions.invoke('get-weather', {
-        body: { city }
-      });
-
-      if (fnError) {
-        throw new Error(fnError.message || 'Erro ao buscar clima');
-      }
-
-      const apiData = data as WeatherApiResponse;
-      
-      const weatherData: WeatherData = {
-        temperature: apiData.temperature,
-        condition: mapCondition(apiData.condition),
-        description: apiData.description,
-        icon: apiData.icon,
-      };
-
-      setWeather(weatherData);
-      setLocation(apiData.location);
+      console.log('Weather fetched:', weatherData.temperature + '°C', apiData.location);
       
       return weatherData;
     } catch (err) {
@@ -109,20 +69,18 @@ export function useWeather() {
     if (!navigator.geolocation) {
       setError('Geolocalização não suportada');
       setLoading(false);
-      // Fallback to São Paulo
-      fetchWeatherByCity('São Paulo');
+      fetchWeather({ city: 'São Paulo' });
       return;
     }
 
     navigator.geolocation.getCurrentPosition(
       (position) => {
         const { latitude, longitude } = position.coords;
-        fetchWeatherByCoords(latitude, longitude);
+        fetchWeather({ lat: latitude, lon: longitude });
       },
       (geoError) => {
         console.warn('Geolocation error:', geoError.message);
-        // Fallback to São Paulo if user denies or error
-        fetchWeatherByCity('São Paulo');
+        fetchWeather({ city: 'São Paulo' });
       },
       {
         enableHighAccuracy: false,
@@ -130,7 +88,7 @@ export function useWeather() {
         maximumAge: 600000, // Cache for 10 minutes
       }
     );
-  }, [fetchWeatherByCoords, fetchWeatherByCity]);
+  }, [fetchWeather]);
 
   useEffect(() => {
     requestGeolocation();
