@@ -8,49 +8,63 @@ interface WeatherWidgetProps {
 }
 
 const getWeatherStyles = (condition: WeatherData['condition'], temperature: number) => {
-  // Based on temperature and condition, return appropriate gradient and icon color
+  // Cold: icy blues and teals
   if (condition === 'cold' || temperature < 15) {
     return {
-      gradient: 'bg-gradient-to-br from-blue-500/20 via-cyan-400/15 to-blue-600/10',
-      iconColor: 'text-blue-400',
-      textColor: 'text-blue-200',
+      gradient: 'from-sky-600 via-cyan-500 to-blue-700',
+      iconColor: 'text-white/90',
     };
   }
   
+  // Rainy: moody blue-grays with a hint of deep blue
   if (condition === 'rainy') {
     return {
-      gradient: 'bg-gradient-to-br from-slate-500/20 via-blue-400/15 to-slate-600/10',
-      iconColor: 'text-blue-400',
-      textColor: 'text-slate-300',
+      gradient: 'from-slate-600 via-blue-700 to-gray-700',
+      iconColor: 'text-white/90',
     };
   }
   
-  if (condition === 'cloudy' || (temperature >= 15 && temperature < 25)) {
+  // Cloudy: muted grays with subtle warmth
+  if (condition === 'cloudy') {
     return {
-      gradient: 'bg-gradient-to-br from-slate-400/20 via-gray-400/15 to-slate-500/10',
-      iconColor: 'text-slate-400',
-      textColor: 'text-slate-300',
+      gradient: 'from-gray-500 via-slate-500 to-zinc-600',
+      iconColor: 'text-white/80',
     };
   }
   
-  if (condition === 'hot' || temperature >= 30) {
+  // Hot: fiery reds and oranges
+  if (condition === 'hot' || temperature >= 32) {
     return {
-      gradient: 'bg-gradient-to-br from-red-500/20 via-orange-400/15 to-amber-500/10',
-      iconColor: 'text-orange-400',
-      textColor: 'text-orange-200',
+      gradient: 'from-red-500 via-orange-500 to-amber-500',
+      iconColor: 'text-white/90',
+    };
+  }
+
+  // Warm sunny (25-31): golden sunset tones
+  if (condition === 'sunny' && temperature >= 25) {
+    return {
+      gradient: 'from-amber-500 via-orange-400 to-yellow-500',
+      iconColor: 'text-white/90',
     };
   }
   
-  // Sunny / warm (25-30)
+  // Mild sunny (15-24): soft warm greens and golds
+  if (condition === 'sunny') {
+    return {
+      gradient: 'from-emerald-500 via-teal-400 to-cyan-500',
+      iconColor: 'text-white/90',
+    };
+  }
+
+  // Default: pleasant gradient
   return {
-    gradient: 'bg-gradient-to-br from-amber-400/20 via-yellow-400/15 to-orange-400/10',
-    iconColor: 'text-amber-400',
-    textColor: 'text-amber-200',
+    gradient: 'from-indigo-500 via-purple-500 to-pink-400',
+    iconColor: 'text-white/90',
   };
 };
 
 const getWeatherIcon = (condition: WeatherData['condition'], iconColor: string) => {
-  const iconClass = cn('w-8 h-8', iconColor);
+  const iconClass = cn('w-8 h-8 drop-shadow-md', iconColor);
   
   switch (condition) {
     case 'sunny':
@@ -79,15 +93,26 @@ export function WeatherWidget({ weather, greeting }: WeatherWidgetProps) {
   
   return (
     <div className={cn(
-      'glass-card p-4 flex items-center justify-between border border-white/10',
-      styles.gradient
+      'relative overflow-hidden rounded-2xl p-4 flex items-center justify-between',
+      'bg-gradient-to-br',
+      styles.gradient,
+      'shadow-lg'
     )}>
-      <div className="flex flex-col">
-        <span className="text-muted-foreground text-sm">{greeting || getGreeting()}</span>
-        <span className="text-2xl font-semibold">{weather.temperature}°C</span>
-        <span className="text-muted-foreground text-sm">{weather.description}</span>
+      {/* Subtle overlay for depth */}
+      <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent pointer-events-none" />
+      
+      <div className="relative flex flex-col z-10">
+        <span className="text-white/80 text-sm font-medium drop-shadow-sm">
+          {greeting || getGreeting()}
+        </span>
+        <span className="text-3xl font-bold text-white drop-shadow-md">
+          {weather.temperature}°C
+        </span>
+        <span className="text-white/80 text-sm font-medium drop-shadow-sm">
+          {weather.description}
+        </span>
       </div>
-      <div className="flex items-center gap-2">
+      <div className="relative z-10 flex items-center gap-2">
         {getWeatherIcon(weather.condition, styles.iconColor)}
       </div>
     </div>
