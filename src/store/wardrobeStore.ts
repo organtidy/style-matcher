@@ -1,19 +1,7 @@
 import { create } from 'zustand';
 import { ClothingItem, Look, ClothingCategory } from '@/types/clothing';
 import { mockClothingItems, generateMockLooks, mockWeather } from '@/data/mockClothing';
-
-// SlotType matching the ManequimLookCard
-type SlotType = 'head' | 'top' | 'bottom' | 'shoes' | 'accessory-left' | 'accessory-right';
-
-// Map slot type to accepted categories
-const slotTypeToCategories: Record<SlotType, ClothingCategory[]> = {
-  'head': ['accessory'],
-  'top': ['top', 'outerwear'],
-  'bottom': ['bottom'],
-  'shoes': ['shoes'],
-  'accessory-left': ['accessory'],
-  'accessory-right': ['accessory'],
-};
+import { SlotType, slotTypeToCategories } from '@/constants/slotCategories';
 
 export type LookId = 'A' | 'B' | 'C' | 'D';
 

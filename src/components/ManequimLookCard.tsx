@@ -5,30 +5,18 @@ import { Check, X, User, Plus } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import { SlotType, slotTypeToCategories as slotCategories } from '@/constants/slotCategories';
 
-// Slot types for the mannequin
-type SlotType = 'head' | 'top' | 'bottom' | 'shoes' | 'accessory-left' | 'accessory-right';
-
-// Export SlotType for external use
+// Re-export SlotType for backward compat
 export type { SlotType };
 
 // Map category to slot
 const categoryToSlot: Record<ClothingCategory, SlotType> = {
-  accessory: 'head', // Default, will be overridden for non-head accessories
+  accessory: 'head',
   outerwear: 'top',
   top: 'top',
   bottom: 'bottom',
   shoes: 'shoes',
-};
-
-// Categories that can go in each slot
-const slotCategories: Record<SlotType, ClothingCategory[]> = {
-  'head': ['accessory'], // bones, óculos
-  'top': ['top', 'outerwear'],
-  'bottom': ['bottom'],
-  'shoes': ['shoes'],
-  'accessory-left': ['accessory'], // pulseiras, relógios
-  'accessory-right': ['accessory'], // brincos, colares
 };
 
 interface DraggableSlotItemProps {

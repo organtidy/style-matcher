@@ -11,12 +11,13 @@ import {
   closestCenter,
 } from '@dnd-kit/core';
 import { ClothingItem, ClothingCategory } from '@/types/clothing';
-import { ManequimLookCard, SlotType } from './ManequimLookCard';
+import { ManequimLookCard } from './ManequimLookCard';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 import { Button } from './ui/button';
 import { Plus, X } from 'lucide-react';
 import { LookId } from '@/store/wardrobeStore';
+import { SlotType, slotTypeToCategories } from '@/constants/slotCategories';
 
 // Categories that can be swapped together
 const compatibleCategories: Record<ClothingCategory, ClothingCategory[]> = {
@@ -25,16 +26,6 @@ const compatibleCategories: Record<ClothingCategory, ClothingCategory[]> = {
   bottom: ['bottom'],
   shoes: ['shoes'],
   accessory: ['accessory'],
-};
-
-// Slot type to category mapping for drop validation
-const slotTypeToCategories: Record<string, ClothingCategory[]> = {
-  'head': ['accessory'],
-  'top': ['top', 'outerwear'],
-  'bottom': ['bottom'],
-  'shoes': ['shoes'],
-  'accessory-left': ['accessory'],
-  'accessory-right': ['accessory'],
 };
 
 interface DuelModeProps {
