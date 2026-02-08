@@ -1,7 +1,7 @@
 import { ClothingItem, ClothingCategory } from '@/types/clothing';
 import { useDroppable } from '@dnd-kit/core';
 import { Button } from '@/components/ui/button';
-import { Check, X, User, Plus } from 'lucide-react';
+import { Check, X, User, Plus, RefreshCw } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
@@ -153,6 +153,7 @@ interface ManequimLookCardProps {
   onRemoveItem: (itemId: string) => void;
   onAddItem: (slotType: SlotType) => void;
   onConfirm: () => void;
+  onRegenerate: () => void;
   activeId?: string | null;
   activeCategory?: ClothingCategory | null;
 }
@@ -163,7 +164,8 @@ export function ManequimLookCard({
   items, 
   onRemoveItem, 
   onAddItem,
-  onConfirm, 
+  onConfirm,
+  onRegenerate,
   activeId,
   activeCategory 
 }: ManequimLookCardProps) {
@@ -199,7 +201,17 @@ export function ManequimLookCard({
     >
       <div className="flex items-center justify-between mb-3">
         <h3 className="font-medium text-sm text-foreground">{title}</h3>
-        <span className="text-xs text-muted-foreground">{items.length} peças</span>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-6 w-6 text-muted-foreground hover:text-primary"
+            onClick={onRegenerate}
+          >
+            <RefreshCw className="w-3.5 h-3.5" />
+          </Button>
+          <span className="text-xs text-muted-foreground">{items.length} peças</span>
+        </div>
       </div>
 
       {/* Mannequin Layout */}
