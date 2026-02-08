@@ -32,6 +32,7 @@ const Index = () => {
     addToLook,
     addLook,
     removeLook,
+    regenerateLook,
   } = useWardrobeStore();
 
   const { weather, location, loading: weatherLoading, error: weatherError, refresh: refreshWeather } = useWeather();
@@ -153,6 +154,7 @@ const Index = () => {
           onSwapItem={swapItem}
           onAddLook={addLook}
           onRemoveLook={removeLook}
+          onRegenerateLook={regenerateLook}
         />
       </motion.div>
 

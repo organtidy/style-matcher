@@ -37,6 +37,7 @@ interface DuelModeProps {
   onSwapItem: (fromLook: LookId, toLook: LookId, itemId: string) => void;
   onAddLook: (lookId: LookId) => void;
   onRemoveLook: (lookId: LookId) => void;
+  onRegenerateLook: (lookId: LookId) => void;
 }
 
 export function DuelMode({
@@ -48,6 +49,7 @@ export function DuelMode({
   onSwapItem,
   onAddLook,
   onRemoveLook,
+  onRegenerateLook,
 }: DuelModeProps) {
   const [activeId, setActiveId] = useState<string | null>(null);
   const [activeLook, setActiveLook] = useState<LookId | null>(null);
@@ -155,6 +157,7 @@ export function DuelMode({
               onRemoveItem={(itemId) => onRemoveFromLook(look.id, itemId)}
               onAddItem={(slotType) => onAddToLook(look.id, slotType)}
               onConfirm={() => onConfirmLook(look.id)}
+              onRegenerate={() => onRegenerateLook(look.id)}
               activeId={activeId}
               activeCategory={activeCategory}
             />
@@ -193,6 +196,7 @@ export function DuelMode({
                       onRemoveItem={(itemId) => onRemoveFromLook(look.id, itemId)}
                       onAddItem={(slotType) => onAddToLook(look.id, slotType)}
                       onConfirm={() => onConfirmLook(look.id)}
+                      onRegenerate={() => onRegenerateLook(look.id)}
                       activeId={activeId}
                       activeCategory={activeCategory}
                     />
@@ -232,6 +236,7 @@ export function DuelMode({
                       onRemoveItem={(itemId) => onRemoveFromLook(look.id, itemId)}
                       onAddItem={(slotType) => onAddToLook(look.id, slotType)}
                       onConfirm={() => onConfirmLook(look.id)}
+                      onRegenerate={() => onRegenerateLook(look.id)}
                       activeId={activeId}
                       activeCategory={activeCategory}
                     />
