@@ -24,6 +24,7 @@ export type Database = {
           id: string
           image_url: string
           last_worn: string | null
+          occasion: string | null
           status: string
           style_tags: string[] | null
           sub_category: string | null
@@ -39,6 +40,7 @@ export type Database = {
           id?: string
           image_url: string
           last_worn?: string | null
+          occasion?: string | null
           status?: string
           style_tags?: string[] | null
           sub_category?: string | null
@@ -54,6 +56,7 @@ export type Database = {
           id?: string
           image_url?: string
           last_worn?: string | null
+          occasion?: string | null
           status?: string
           style_tags?: string[] | null
           sub_category?: string | null
