@@ -124,12 +124,40 @@ serve(async (req) => {
       'glasses': { category: 'accessory', subCategory: 'glasses' },
     };
 
+    // Check if the image is actually clothing/accessory
+    const clothingRelatedKeywords = [
+      'clothing', 'clothes', 'fashion', 'apparel', 'garment', 'wear', 'outfit',
+      'shirt', 't-shirt', 'blouse', 'polo', 'top', 'jacket', 'coat', 'hoodie',
+      'sweater', 'cardigan', 'pants', 'jeans', 'shorts', 'skirt', 'trousers',
+      'shoe', 'sneakers', 'boots', 'sandals', 'footwear', 'hat', 'cap',
+      'sunglasses', 'watch', 'bracelet', 'necklace', 'earring', 'belt', 'bag',
+      'glasses', 'dress', 'suit', 'tie', 'scarf', 'gloves', 'socks',
+      'underwear', 'lingerie', 'swimwear', 'bikini', 'vest', 'blazer',
+      'denim', 'leather', 'cotton', 'silk', 'wool', 'fabric', 'textile',
+      'sleeve', 'collar', 'pocket', 'zipper', 'button', 'lace',
+    ];
+
+    const allDetected = [...labels, ...objects];
+    const isClothing = allDetected.some(item =>
+      clothingRelatedKeywords.some(kw => item.includes(kw) || kw.includes(item))
+    );
+
+    if (!isClothing) {
+      return new Response(JSON.stringify({
+        error: 'not_clothing',
+        message: 'Essa imagem não parece ser uma peça de roupa ou acessório. Por favor, envie uma foto de uma roupa, calçado ou acessório.',
+        raw_labels: labels,
+        raw_objects: objects,
+      }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
     // Find best matching category
     let detectedCategory = 'top'; // default
     let detectedSubCategory: string | null = null;
     let confidence = 0;
-
-    const allDetected = [...labels, ...objects];
     
     for (const item of allDetected) {
       for (const [key, value] of Object.entries(categoryMapping)) {

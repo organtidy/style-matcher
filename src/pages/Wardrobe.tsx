@@ -1,9 +1,11 @@
 import { useWardrobeStore } from '@/store/wardrobeStore';
-import { ClothingCategory } from '@/types/clothing';
+import { ClothingCategory, ClothingItem } from '@/types/clothing';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Shirt, Filter } from 'lucide-react';
+import { Shirt, Filter, Trash2, X } from 'lucide-react';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { toast } from 'sonner';
 
 const categoryLabels: Record<ClothingCategory | 'all', string> = {
   all: 'Todos',
@@ -15,14 +17,21 @@ const categoryLabels: Record<ClothingCategory | 'all', string> = {
 };
 
 export default function Wardrobe() {
-  const { clothes } = useWardrobeStore();
+  const { clothes, removeClothing } = useWardrobeStore();
   const [filter, setFilter] = useState<ClothingCategory | 'all'>('all');
+  const [selectedItem, setSelectedItem] = useState<ClothingItem | null>(null);
 
   const cleanClothes = clothes.filter((c) => c.status === 'clean');
   const filteredClothes =
     filter === 'all'
       ? cleanClothes
       : cleanClothes.filter((c) => c.category === filter);
+
+  const handleDelete = (item: ClothingItem) => {
+    removeClothing(item.id);
+    setSelectedItem(null);
+    toast.success('Peça removida do guarda-roupa!', { icon: '🗑️' });
+  };
 
   return (
     <div className="page-container">
@@ -68,7 +77,8 @@ export default function Wardrobe() {
                 initial={{ opacity: 0, scale: 0.8 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.8 }}
-                className="clothing-item"
+                className="clothing-item cursor-pointer"
+                onClick={() => setSelectedItem(item)}
               >
                 <img
                   src={item.image_url}
@@ -98,6 +108,37 @@ export default function Wardrobe() {
           </motion.div>
         )}
       </motion.div>
+
+      {/* Image Expand Dialog */}
+      <Dialog open={!!selectedItem} onOpenChange={(open) => !open && setSelectedItem(null)}>
+        <DialogContent className="p-0 border-none bg-transparent shadow-none max-w-[90vw] max-h-[90vh] flex flex-col items-center gap-4">
+          {selectedItem && (
+            <>
+              <motion.img
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                src={selectedItem.image_url}
+                alt={selectedItem.description}
+                className="max-w-full max-h-[70vh] rounded-2xl object-contain shadow-2xl"
+              />
+              <div className="flex flex-col items-center gap-2">
+                <p className="text-sm text-white font-medium drop-shadow-md">
+                  {selectedItem.description}
+                </p>
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={() => handleDelete(selectedItem)}
+                  className="gap-2"
+                >
+                  <Trash2 className="w-4 h-4" />
+                  Excluir peça
+                </Button>
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -29,6 +29,7 @@ interface WardrobeState {
   clearLaundrySelection: () => void;
   confirmLook: (lookId: LookId) => void;
   addClothing: (item: ClothingItem) => void;
+  removeClothing: (itemId: string) => void;
   getDirtyClothes: () => ClothingItem[];
   openWardrobePicker: (lookId: LookId, slotType: SlotType) => void;
   closeWardrobePicker: () => void;
@@ -191,6 +192,16 @@ export const useWardrobeStore = create<WardrobeState>((set, get) => ({
   addClothing: (item: ClothingItem) => {
     set((state) => ({
       clothes: [...state.clothes, item],
+    }));
+  },
+
+  removeClothing: (itemId: string) => {
+    set((state) => ({
+      clothes: state.clothes.filter(c => c.id !== itemId),
+      lookA: state.lookA.filter(c => c.id !== itemId),
+      lookB: state.lookB.filter(c => c.id !== itemId),
+      lookC: state.lookC.filter(c => c.id !== itemId),
+      lookD: state.lookD.filter(c => c.id !== itemId),
     }));
   },
 
