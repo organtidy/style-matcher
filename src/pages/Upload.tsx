@@ -9,6 +9,7 @@ import { motion } from 'framer-motion';
 import { Camera, Upload as UploadIcon, Sparkles, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { OccasionSelector } from '@/components/OccasionSelector';
+import { supabase } from '@/integrations/supabase/client';
 
 const categories: { value: ClothingCategory; label: string }[] = [
   { value: 'top', label: 'Parte de Cima' },
@@ -54,24 +55,53 @@ export default function UploadPage() {
     if (file) {
       const reader = new FileReader();
       reader.onloadend = () => {
-        setImagePreview(reader.result as string);
-        // Mock AI analysis
-        mockAIAnalysis();
+        const dataUrl = reader.result as string;
+        setImagePreview(dataUrl);
+        analyzeWithAI(dataUrl);
       };
       reader.readAsDataURL(file);
     }
   };
 
-  const mockAIAnalysis = () => {
+  const analyzeWithAI = async (dataUrl: string) => {
     setIsAnalyzing(true);
-    setTimeout(() => {
-      setCategory('top');
-      setDescription('Camiseta identificada por IA');
-      setStyleTags('casual, urbano');
-      setWarmthLevel(2);
-      setIsAnalyzing(false);
+    try {
+      // Extract base64 without prefix
+      const base64 = dataUrl.split(',')[1];
+
+      const { data, error } = await supabase.functions.invoke('analyze-clothing', {
+        body: { image_base64: base64 },
+      });
+
+      if (error) throw error;
+
+      if (data?.error === 'not_clothing') {
+        toast.error(data.message || 'Isso não é uma peça de roupa!', { icon: '🚫' });
+        clearImage();
+        return;
+      }
+
+      // Auto-fill all fields
+      setCategory((data.category as ClothingCategory) || 'top');
+      setDescription(data.description || '');
+      setWarmthLevel(data.warmth_level || 3);
+      setStyleTags((data.style_tags || ['casual']).join(', '));
+
+      if (data.category === 'accessory' && data.sub_category) {
+        setSubCategory(data.sub_category as AccessorySubCategory);
+      }
+
+      if (data.occasion) {
+        setOccasion(data.occasion as ClothingOccasion);
+      }
+
       toast.success('IA identificou a peça!', { icon: '🤖' });
-    }, 1500);
+    } catch (err: any) {
+      console.error('AI analysis error:', err);
+      toast.error('Erro ao analisar imagem. Preencha manualmente.');
+    } finally {
+      setIsAnalyzing(false);
+    }
   };
 
   const handleSubmit = () => {
