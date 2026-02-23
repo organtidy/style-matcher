@@ -8,3 +8,6 @@ verify_jwt = false
 
 [functions.fashion-consultant]
 verify_jwt = false
+
+[functions.manage-api-keys]
+verify_jwt = false
