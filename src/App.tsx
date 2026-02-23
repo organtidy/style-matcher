@@ -8,6 +8,7 @@ import Index from "./pages/Index";
 import Laundry from "./pages/Laundry";
 import Upload from "./pages/Upload";
 import Wardrobe from "./pages/Wardrobe";
+import ApiKeys from "./pages/ApiKeys";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 import { BottomNav } from "./components/BottomNav";
@@ -61,6 +62,7 @@ const AppRoutes = () => {
         <Route path="/laundry" element={<ProtectedRoute><Laundry /></ProtectedRoute>} />
         <Route path="/upload" element={<ProtectedRoute><Upload /></ProtectedRoute>} />
         <Route path="/wardrobe" element={<ProtectedRoute><Wardrobe /></ProtectedRoute>} />
+        <Route path="/api-keys" element={<ProtectedRoute><ApiKeys /></ProtectedRoute>} />
         <Route path="*" element={<NotFound />} />
       </Routes>
       {user && <BottomNav />}
