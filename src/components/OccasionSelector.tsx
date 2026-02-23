@@ -1,6 +1,7 @@
 import { ClothingOccasion } from '@/types/clothing';
 import { motion } from 'framer-motion';
-import { Briefcase, PartyPopper, Coffee, Sparkles } from 'lucide-react';
+import { Briefcase, PartyPopper, Coffee, Sparkles, Key } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 const occasions: { value: ClothingOccasion; label: string; icon: typeof Briefcase }[] = [
   { value: 'trabalho', label: 'Trabalho', icon: Briefcase },
@@ -16,15 +17,26 @@ interface OccasionSelectorProps {
 }
 
 export function OccasionSelector({ selected, onSelect, title = 'Ocasiões' }: OccasionSelectorProps) {
+  const navigate = useNavigate();
   const handleClick = (value: ClothingOccasion) => {
     onSelect(selected === value ? null : value);
   };
 
   return (
     <div className="space-y-2">
-      <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-        {title}
-      </span>
+      <div className="flex items-center justify-between">
+        <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+          {title}
+        </span>
+        <motion.button
+          whileTap={{ scale: 0.95 }}
+          onClick={() => navigate('/api-keys')}
+          className="flex items-center gap-1 text-xs font-medium text-primary hover:text-primary/80 transition-colors"
+        >
+          <Key className="w-3.5 h-3.5" />
+          Minhas Chaves
+        </motion.button>
+      </div>
       <div className="flex gap-2">
         {occasions.map(({ value, label, icon: Icon }) => {
           const isActive = selected === value;
