@@ -1,5 +1,6 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -43,17 +44,38 @@ serve(async (req) => {
   }
 
   try {
-    const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY');
+    const body = await req.json();
+    const { clothes, weather, laundryItems = [], occasion = 'casual', numberOfLooks = 2, user_id }: RequestBody & { user_id?: string } = body;
+
+    // Try to get user-specific key from database
+    let GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY');
+    if (user_id) {
+      try {
+        const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+        const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+        const supabase = createClient(supabaseUrl, supabaseKey);
+        const { data } = await supabase
+          .from('user_api_keys')
+          .select('key_value')
+          .eq('user_id', user_id)
+          .eq('key_name', 'gemini')
+          .maybeSingle();
+        if (data?.key_value) {
+          GEMINI_API_KEY = data.key_value;
+          console.log('Using user-specific Gemini API key');
+        }
+      } catch (e) {
+        console.log('Falling back to global key:', e);
+      }
+    }
     
     if (!GEMINI_API_KEY) {
-      console.error('GEMINI_API_KEY not found in environment');
+      console.error('GEMINI_API_KEY not found');
       return new Response(
-        JSON.stringify({ error: 'GEMINI_API_KEY not configured' }),
+        JSON.stringify({ error: 'GEMINI_API_KEY não configurada. Adicione sua chave em Minhas Chaves.' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
-
-    const { clothes, weather, laundryItems = [], occasion = 'casual', numberOfLooks = 2 }: RequestBody = await req.json();
 
     console.log('Received request:', { 
       clothesCount: clothes?.length, 

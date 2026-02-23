@@ -13,12 +13,33 @@ serve(async (req) => {
   }
 
   try {
-    const OPENWEATHERMAP_API_KEY = Deno.env.get('OPENWEATHERMAP_API_KEY');
-    if (!OPENWEATHERMAP_API_KEY) {
-      throw new Error('OPENWEATHERMAP_API_KEY não configurada');
+    const { lat, lon, city, user_id } = await req.json();
+
+    // Try to get user-specific key from database
+    let OPENWEATHERMAP_API_KEY = Deno.env.get('OPENWEATHERMAP_API_KEY');
+    if (user_id) {
+      try {
+        const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+        const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+        const sb = createClient(supabaseUrl, supabaseKey);
+        const { data } = await sb
+          .from('user_api_keys')
+          .select('key_value')
+          .eq('user_id', user_id)
+          .eq('key_name', 'openweathermap')
+          .maybeSingle();
+        if (data?.key_value) {
+          OPENWEATHERMAP_API_KEY = data.key_value;
+          console.log('Using user-specific OpenWeatherMap API key');
+        }
+      } catch (e) {
+        console.log('Falling back to global key:', e);
+      }
     }
 
-    const { lat, lon, city } = await req.json();
+    if (!OPENWEATHERMAP_API_KEY) {
+      throw new Error('OPENWEATHERMAP_API_KEY não configurada. Adicione sua chave em Minhas Chaves.');
+    }
     
     let url: string;
     if (lat && lon) {

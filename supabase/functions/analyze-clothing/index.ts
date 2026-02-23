@@ -1,5 +1,6 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -102,12 +103,33 @@ serve(async (req) => {
   }
 
   try {
-    const GOOGLE_VISION_API_KEY = Deno.env.get('GOOGLE_VISION_API_KEY');
-    if (!GOOGLE_VISION_API_KEY) {
-      throw new Error('GOOGLE_VISION_API_KEY não configurada');
+    const { image_url, image_base64, user_id } = await req.json();
+
+    // Try to get user-specific key from database
+    let GOOGLE_VISION_API_KEY = Deno.env.get('GOOGLE_VISION_API_KEY');
+    if (user_id) {
+      try {
+        const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+        const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+        const supabase = createClient(supabaseUrl, supabaseKey);
+        const { data } = await supabase
+          .from('user_api_keys')
+          .select('key_value')
+          .eq('user_id', user_id)
+          .eq('key_name', 'google_vision')
+          .maybeSingle();
+        if (data?.key_value) {
+          GOOGLE_VISION_API_KEY = data.key_value;
+          console.log('Using user-specific Google Vision API key');
+        }
+      } catch (e) {
+        console.log('Falling back to global key:', e);
+      }
     }
 
-    const { image_url, image_base64 } = await req.json();
+    if (!GOOGLE_VISION_API_KEY) {
+      throw new Error('GOOGLE_VISION_API_KEY não configurada. Adicione sua chave em Minhas Chaves.');
+    }
     if (!image_url && !image_base64) {
       throw new Error('Forneça image_url ou image_base64');
     }
