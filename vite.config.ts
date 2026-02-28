@@ -49,8 +49,8 @@ export default defineConfig(({ mode }) => ({
         ],
       },
       manifest: {
-        name: "Davi",
-        short_name: "Davi",
+        name: "Personal Stylist",
+        short_name: "Stylist",
         description: "Gerencie seu guarda-roupa e receba sugestões de looks baseadas no clima",
         start_url: "/",
         display: "standalone",
