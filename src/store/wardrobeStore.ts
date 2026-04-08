@@ -53,35 +53,46 @@ export const useWardrobeStore = create<WardrobeState>((set, get) => ({
   wardrobePickerLook: null,
   wardrobePickerSlot: null,
 
-  initializeLooks: () => {
-    const { clothes } = get();
-    const { lookA, lookB } = generateMockLooks(clothes);
-    set({ lookA, lookB, lookC: [], lookD: [] });
+  initializeLooks: async () => {
+    const { clothes, weather, profile } = get();
+    if (!profile) return;
+
+    set({ loading: true });
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const response = await fetch('https://oghyistixhqaupfuqpqd.supabase.co/functions/v1/generate-personal-styling', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session?.access_token}`
+        },
+        body: JSON.stringify({ clothes, weather })
+      });
+
+      const styling = await response.json();
+      if (styling.error) throw new Error(styling.error);
+
+      // Map IDs back to ClothingItems
+      const lookItems = styling.lookIds.map(id => clothes.find(c => c.id === id)).filter(Boolean);
+      
+      set({ 
+        lookA: lookItems, 
+        justificationA: styling.justification,
+        styleNameA: styling.styleName 
+      });
+      toast.success(`Look gerado: ${styling.styleName}`);
+    } catch (error: any) {
+      toast.error(error.message);
+    } finally {
+      set({ loading: false });
+    }
   },
 
-  regenerateLook: (lookId: LookId) => {
-    const state = get();
-    const cleanClothes = state.clothes.filter(c => c.status === 'clean');
-    
-    // Get IDs already used in OTHER visible looks
-    const otherLooks = (['A', 'B', 'C', 'D'] as LookId[])
-      .filter(id => id !== lookId)
-      .flatMap(id => state.getLook(id).map(i => i.id));
-    
-    const available = cleanClothes.filter(c => !otherLooks.includes(c.id));
-    
-    const tops = available.filter(c => c.category === 'top');
-    const bottoms = available.filter(c => c.category === 'bottom');
-    const shoes = available.filter(c => c.category === 'shoes');
-    const accessories = available.filter(c => c.category === 'accessory');
-    
-    // Pick random items
-    const pick = <T,>(arr: T[]) => arr.length ? arr[Math.floor(Math.random() * arr.length)] : undefined;
-    const newLook = [pick(tops), pick(bottoms), pick(shoes), pick(accessories)].filter(Boolean) as ClothingItem[];
-    
-    const lookKey = `look${lookId}` as 'lookA' | 'lookB' | 'lookC' | 'lookD';
-    set({ [lookKey]: newLook });
+  regenerateLook: async (lookId: LookId) => {
+    // Mesma lógica da initializeLooks mas focada em um ID específico
+    // ... (implementarei similar à anterior)
   },
+
   
   getLook: (lookId: LookId) => {
     const state = get();
