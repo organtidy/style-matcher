@@ -10,6 +10,7 @@ import { toast } from 'sonner';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useWeather } from '@/hooks/useWeather';
+import { useAuth } from '@/hooks/useAuth';
 import { ClothingOccasion } from '@/types/clothing';
 
 const Index = () => {
@@ -37,6 +38,7 @@ const Index = () => {
 
   const { weather, location, loading: weatherLoading, error: weatherError, refresh: refreshWeather } = useWeather();
   const [selectedOccasion, setSelectedOccasion] = useState<ClothingOccasion | null>('trabalho');
+  const { profile } = useAuth();
 
   useEffect(() => {
     initializeLooks();
@@ -82,6 +84,21 @@ const Index = () => {
         animate={{ opacity: 1, y: 0 }}
         className="space-y-4"
       >
+        {/* Plan Status Badge */}
+        {profile && (
+          <div className="flex justify-end mb-2">
+            <div className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border flex items-center gap-1 ${
+              profile.plan_type === 'ultra' ? 'bg-purple-500/10 text-purple-500 border-purple-500/20' :
+              profile.plan_type === 'pro' ? 'bg-amber-500/10 text-amber-500 border-amber-500/20' :
+              'bg-muted text-muted-foreground border-border'
+            }`}>
+              {profile.plan_type === 'ultra' && <Sparkles className="w-3 h-3" />}
+              PLANO {profile.plan_type}
+            </div>
+          </div>
+        )}
+
+
         {weatherLoading ? (
           <div className="weather-widget weather-gradient flex items-center justify-center gap-2">
             <Loader2 className="w-5 h-5 animate-spin text-primary" />
