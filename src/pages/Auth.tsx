@@ -33,32 +33,39 @@ export default function AuthPage() {
 
     setLoading(true);
 
-    if (isLogin) {
-      const { error } = await signIn(email, password);
-      if (error) {
-        if (error.message.includes('Invalid login credentials')) {
-          toast.error('Email ou senha incorretos');
-        } else {
-          toast.error(error.message);
+    try {
+      if (isLogin) {
+        const { error } = await signIn(email, password);
+        if (error) {
+          if (error.message.includes('Invalid login credentials')) {
+            throw new Error('Email ou senha incorretos');
+          }
+          throw error;
         }
-      } else {
         toast.success('Bem-vindo de volta! 👋');
         navigate('/');
-      }
-    } else {
-      const { error } = await signUp(email, password, displayName);
-      if (error) {
-        if (error.message.includes('already registered')) {
-          toast.error('Este email já está cadastrado. Tente fazer login.');
-        } else {
-          toast.error(error.message);
-        }
       } else {
-        toast.success('Conta criada! Verifique seu email para confirmar.', { icon: '📧' });
-      }
-    }
+        const { error } = await signUp(email, password, displayName);
+        if (error) {
+          if (error.message.includes('already registered')) {
+            throw new Error('Este email já está cadastrado. Tente fazer login.');
+          }
+          throw error;
+        }
 
-    setLoading(false);
+        // Se o cadastro foi um sucesso, o Supabase já loga automaticamente se o Confirm Email estiver desativado.
+        toast.success('Conta criada com sucesso! Redirecionando...');
+        
+        // Pequeno delay para o toast ser lido
+        setTimeout(() => {
+          navigate('/');
+        }, 1500);
+      }
+    } catch (error: any) {
+      toast.error(error.message || 'Erro na autenticação');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -97,6 +104,7 @@ export default function AuthPage() {
                   onChange={(e) => setDisplayName(e.target.value)}
                   placeholder="Seu nome"
                   className="glass-card border-border/50"
+                  required={!isLogin}
                 />
               </motion.div>
             )}
@@ -112,6 +120,7 @@ export default function AuthPage() {
               placeholder="seu@email.com"
               className="glass-card border-border/50"
               autoComplete="email"
+              required
             />
           </div>
 
@@ -126,6 +135,7 @@ export default function AuthPage() {
                 placeholder="••••••••"
                 className="glass-card border-border/50 pr-10"
                 autoComplete={isLogin ? 'current-password' : 'new-password'}
+                required
               />
               <button
                 type="button"
