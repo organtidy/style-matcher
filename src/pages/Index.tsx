@@ -12,7 +12,6 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { useWeather } from '@/hooks/useWeather';
 import { useAuth } from '@/hooks/useAuth';
 import { ClothingOccasion } from '@/types/clothing';
-import { useAuth } from '@/hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
 
 const Index = () => {
@@ -50,7 +49,6 @@ const Index = () => {
 
   const { weather, location, loading: weatherLoading, error: weatherError, refresh: refreshWeather } = useWeather();
   const [selectedOccasion, setSelectedOccasion] = useState<ClothingOccasion | null>('trabalho');
-  const { profile } = useAuth();
 
   useEffect(() => {
     if (user?.id) {
