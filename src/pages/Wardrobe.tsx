@@ -7,6 +7,9 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { toast } from 'sonner';
 
+import { useAuth } from '@/hooks/useAuth';
+import { useEffect } from 'react';
+
 const categoryLabels: Record<ClothingCategory | 'all', string> = {
   all: 'Todos',
   top: 'Camisas',
@@ -17,9 +20,16 @@ const categoryLabels: Record<ClothingCategory | 'all', string> = {
 };
 
 export default function Wardrobe() {
-  const { clothes, removeClothing } = useWardrobeStore();
+  const { user } = useAuth();
+  const { clothes, removeClothing, loadUserClothes, loadingClothes } = useWardrobeStore();
   const [filter, setFilter] = useState<ClothingCategory | 'all'>('all');
   const [selectedItem, setSelectedItem] = useState<ClothingItem | null>(null);
+
+  useEffect(() => {
+    if (user?.id && clothes.length === 0) {
+      loadUserClothes(user.id);
+    }
+  }, [user?.id, clothes.length, loadUserClothes]);
 
   const cleanClothes = clothes.filter((c) => c.status === 'clean');
   const filteredClothes =
@@ -27,8 +37,8 @@ export default function Wardrobe() {
       ? cleanClothes
       : cleanClothes.filter((c) => c.category === filter);
 
-  const handleDelete = (item: ClothingItem) => {
-    removeClothing(item.id);
+  const handleDelete = async (item: ClothingItem) => {
+    await removeClothing(item.id);
     setSelectedItem(null);
     toast.success('Peça removida do guarda-roupa!', { icon: '🗑️' });
   };

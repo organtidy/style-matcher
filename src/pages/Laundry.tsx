@@ -5,20 +5,31 @@ import { Droplets, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 
+import { useAuth } from '@/hooks/useAuth';
+import { useEffect } from 'react';
+
 export default function Laundry() {
+  const { user } = useAuth();
   const {
     clothes,
     selectedLaundryItems,
     toggleLaundrySelection,
     moveToClean,
     getDirtyClothes,
+    loadUserClothes,
   } = useWardrobeStore();
+
+  useEffect(() => {
+    if (user?.id && clothes.length === 0) {
+      loadUserClothes(user.id);
+    }
+  }, [user?.id, clothes.length, loadUserClothes]);
 
   const dirtyClothes = getDirtyClothes();
   const hasSelection = selectedLaundryItems.length > 0;
 
-  const handleWash = () => {
-    moveToClean(selectedLaundryItems);
+  const handleWash = async () => {
+    await moveToClean(selectedLaundryItems);
     toast.success(`${selectedLaundryItems.length} peça(s) lavada(s)!`, {
       icon: '🧺',
     });

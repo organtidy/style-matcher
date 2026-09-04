@@ -52,11 +52,7 @@ export default function AuthPage() {
           }
           throw error;
         }
-
-        // Se o cadastro foi um sucesso, o Supabase já loga automaticamente se o Confirm Email estiver desativado.
         toast.success('Conta criada com sucesso! Redirecionando...');
-        
-        // Pequeno delay para o toast ser lido
         setTimeout(() => {
           navigate('/');
         }, 1500);

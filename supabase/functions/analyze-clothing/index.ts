@@ -1,101 +1,10 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
-
-// Strict whitelist: only these labels/objects count as clothing
-const CLOTHING_KEYWORDS = new Set([
-  'shirt', 't-shirt', 'blouse', 'polo shirt', 'top', 'tank top', 'camisole',
-  'jacket', 'coat', 'hoodie', 'sweater', 'cardigan', 'blazer', 'vest', 'parka',
-  'pants', 'jeans', 'shorts', 'skirt', 'trousers', 'leggings', 'chinos',
-  'dress', 'gown', 'jumpsuit', 'romper', 'overalls', 'suit',
-  'shoe', 'sneakers', 'boots', 'sandals', 'footwear', 'loafers', 'heels', 'flats', 'slippers',
-  'hat', 'cap', 'beanie', 'sunglasses', 'watch', 'bracelet', 'necklace', 'earring',
-  'belt', 'bag', 'handbag', 'backpack', 'glasses', 'scarf', 'gloves', 'tie', 'bow tie',
-  'bikini', 'swimwear', 'underwear', 'bra', 'socks',
-]);
-
-// Broad terms that alone are NOT enough — need a specific match too
-const WEAK_KEYWORDS = new Set([
-  'clothing', 'clothes', 'fashion', 'apparel', 'garment', 'wear', 'outfit',
-  'fabric', 'textile', 'cotton', 'silk', 'wool', 'denim', 'leather', 'lace',
-  'sleeve', 'collar', 'pocket', 'zipper', 'button',
-]);
-
-// Blacklist: body parts and non-clothing objects that Vision might return
-const BLACKLIST = new Set([
-  'finger', 'hand', 'arm', 'leg', 'foot', 'face', 'head', 'skin', 'nail',
-  'thumb', 'wrist', 'elbow', 'knee', 'toe', 'body', 'person', 'human',
-  'gesture', 'sign language', 'fist', 'palm', 'middle finger',
-  'food', 'animal', 'plant', 'car', 'vehicle', 'furniture', 'electronics',
-]);
-
-const categoryMapping: Record<string, { category: string; subCategory?: string }> = {
-  'shirt': { category: 'top', subCategory: 'shirt' },
-  't-shirt': { category: 'top', subCategory: 't-shirt' },
-  'blouse': { category: 'top', subCategory: 'blouse' },
-  'polo shirt': { category: 'top', subCategory: 'polo' },
-  'top': { category: 'top' },
-  'tank top': { category: 'top', subCategory: 'tank top' },
-  'jacket': { category: 'outerwear', subCategory: 'jacket' },
-  'coat': { category: 'outerwear', subCategory: 'coat' },
-  'hoodie': { category: 'outerwear', subCategory: 'hoodie' },
-  'sweater': { category: 'outerwear', subCategory: 'sweater' },
-  'cardigan': { category: 'outerwear', subCategory: 'cardigan' },
-  'blazer': { category: 'outerwear', subCategory: 'blazer' },
-  'vest': { category: 'outerwear', subCategory: 'vest' },
-  'pants': { category: 'bottom', subCategory: 'pants' },
-  'jeans': { category: 'bottom', subCategory: 'jeans' },
-  'shorts': { category: 'bottom', subCategory: 'shorts' },
-  'skirt': { category: 'bottom', subCategory: 'skirt' },
-  'trousers': { category: 'bottom', subCategory: 'trousers' },
-  'dress': { category: 'bottom', subCategory: 'dress' },
-  'shoe': { category: 'shoes' },
-  'sneakers': { category: 'shoes', subCategory: 'sneakers' },
-  'boots': { category: 'shoes', subCategory: 'boots' },
-  'sandals': { category: 'shoes', subCategory: 'sandals' },
-  'footwear': { category: 'shoes' },
-  'loafers': { category: 'shoes', subCategory: 'loafers' },
-  'heels': { category: 'shoes', subCategory: 'heels' },
-  'hat': { category: 'accessory', subCategory: 'bone' },
-  'cap': { category: 'accessory', subCategory: 'bone' },
-  'beanie': { category: 'accessory', subCategory: 'bone' },
-  'sunglasses': { category: 'accessory', subCategory: 'oculos' },
-  'glasses': { category: 'accessory', subCategory: 'oculos' },
-  'watch': { category: 'accessory', subCategory: 'relogio' },
-  'bracelet': { category: 'accessory', subCategory: 'pulseira' },
-  'necklace': { category: 'accessory', subCategory: 'colar' },
-  'earring': { category: 'accessory', subCategory: 'brinco' },
-  'belt': { category: 'accessory', subCategory: 'outro' },
-  'bag': { category: 'accessory', subCategory: 'outro' },
-  'handbag': { category: 'accessory', subCategory: 'outro' },
-  'backpack': { category: 'accessory', subCategory: 'outro' },
-  'scarf': { category: 'accessory', subCategory: 'outro' },
-};
-
-function detectOccasion(labels: string[], category: string, subCategory?: string | null): string {
-  const all = labels.join(' ');
-  
-  // Formal / work
-  if (['blazer', 'suit', 'tie', 'bow tie'].some(k => all.includes(k)) || 
-      (subCategory && ['blazer', 'vest'].includes(subCategory))) {
-    return 'trabalho';
-  }
-  // Special occasions
-  if (['dress', 'gown', 'formal', 'elegant', 'luxury', 'silk'].some(k => all.includes(k))) {
-    return 'especiais';
-  }
-  // Sporty / daily
-  if (['sporty', 'athletic', 'sport', 'sneakers', 'hoodie', 'leggings'].some(k => all.includes(k))) {
-    return 'diario';
-  }
-  // Default casual
-  return 'casual';
-}
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -103,163 +12,166 @@ serve(async (req) => {
   }
 
   try {
-    const { image_url, image_base64, user_id } = await req.json();
+    const { image_url, image_base64 } = await req.json();
 
-    // Try to get user-specific key from database
-    let GOOGLE_VISION_API_KEY = Deno.env.get('GOOGLE_VISION_API_KEY');
-    if (user_id) {
-      try {
-        const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-        const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-        const supabase = createClient(supabaseUrl, supabaseKey);
-        const { data } = await supabase
-          .from('user_api_keys')
-          .select('key_value')
-          .eq('user_id', user_id)
-          .eq('key_name', 'google_vision')
-          .maybeSingle();
-        if (data?.key_value) {
-          GOOGLE_VISION_API_KEY = data.key_value;
-          console.log('Using user-specific Google Vision API key');
-        }
-      } catch (e) {
-        console.log('Falling back to global key:', e);
-      }
+    const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY') || Deno.env.get('GOOGLE_AI_API_KEY');
+
+    if (!GEMINI_API_KEY) {
+      throw new Error('GEMINI_API_KEY não configurada. Configure no Supabase Edge Functions Secrets.');
     }
 
-    if (!GOOGLE_VISION_API_KEY) {
-      throw new Error('GOOGLE_VISION_API_KEY não configurada. Adicione sua chave em Minhas Chaves.');
-    }
     if (!image_url && !image_base64) {
       throw new Error('Forneça image_url ou image_base64');
     }
 
-    console.log("Analyzing clothing image...");
+    let mimeType = 'image/jpeg';
+    let base64Data = '';
 
-    const imageContent = image_base64
-      ? { content: image_base64 }
-      : { source: { imageUri: image_url } };
-
-    const visionResponse = await fetch(
-      `https://vision.googleapis.com/v1/images:annotate?key=${GOOGLE_VISION_API_KEY}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          requests: [{
-            image: imageContent,
-            features: [
-              { type: 'LABEL_DETECTION', maxResults: 15 },
-              { type: 'IMAGE_PROPERTIES', maxResults: 5 },
-              { type: 'OBJECT_LOCALIZATION', maxResults: 5 },
-            ],
-          }],
-        }),
+    if (image_base64) {
+      if (image_base64.includes(';base64,')) {
+        const parts = image_base64.split(';base64,');
+        mimeType = parts[0].replace('data:', '') || 'image/jpeg';
+        base64Data = parts[1];
+      } else {
+        base64Data = image_base64;
       }
-    );
+    } else if (image_url) {
+      // Fetch image from URL
+      const imgRes = await fetch(image_url);
+      if (!imgRes.ok) throw new Error('Não foi possível carregar a imagem da URL');
+      const contentType = imgRes.headers.get('content-type');
+      if (contentType) mimeType = contentType.split(';')[0];
+      const buffer = await imgRes.arrayBuffer();
+      const bytes = new Uint8Array(buffer);
+      let binary = '';
+      for (let i = 0; i < bytes.byteLength; i++) {
+        binary += String.fromCharCode(bytes[i]);
+      }
+      base64Data = btoa(binary);
+    }
 
-    const visionData = await visionResponse.json();
-    console.log("Vision API response:", JSON.stringify(visionData));
+    console.log("Analyzing clothing image with Gemini Flash Vision...");
 
-    if (visionData.error) throw new Error(visionData.error.message);
+    const prompt = `Você é um estilista e especialista em catalogação de moda.
+Analise a imagem enviada com muita precisão e responda APENAS com um objeto JSON válido (sem texto adicional, sem formatação markdown).
 
-    const response = visionData.responses?.[0];
-    if (!response) throw new Error('Sem resposta da Vision API');
+Regras de validação:
+1. Se a imagem NÃO for uma peça de vestuário, sapato, calçado ou acessório de moda (por exemplo: pessoa sem roupa evidente, animal, comida, veículo, objeto aleatório, paisagem), defina "is_clothing": false.
+2. Se for uma peça válida, defina "is_clothing": true e preencha:
+   - "category": UMA entre ["top", "bottom", "shoes", "outerwear", "accessory"]
+     * top: camisetas, camisas, blusas, regatas, tops
+     * bottom: calças, shorts, bermudas, saias, vestidos
+     * shoes: tênis, sapatos, botas, sandálias, chinelos
+     * outerwear: jaquetas, casacos, blazers, sobretudos, moletons, cardigãs
+     * accessory: bonés, chapéus, relógios, pulseiras, colares, brincos, óculos, cintos, bolsas
+   - "sub_category": se category for "accessory", escolha UMA entre ["bone", "brinco", "pulseira", "relogio", "oculos", "colar", "outro"]. Se não for acessório, use null.
+   - "description": descrição curta e elegante em português (ex: "Camisa social branca de algodão", "Calça jeans slim azul escura", "Tênis casual branco")
+   - "style_tags": array de 2 a 4 tags em português (ex: ["casual", "minimalista", "trabalho", "esportivo", "elegante", "streetwear"])
+   - "warmth_level": número de 1 a 5 baseado no isolamento térmico:
+     * 1: muito leve / verão (regatas, shorts, sandálias)
+     * 2: leve (camisetas, camisas leves, tênis)
+     * 3: médio (calça jeans, camisas manga longa, calçados fechados)
+     * 4: quente (jaquetas, moletons, cardigãs)
+     * 5: muito quente / inverno pesado (sobretudos, casacos de lã, botas pesadas)
+   - "occasion": UMA entre ["casual", "trabalho", "especiais", "diario"]
+   - "ai_detected_colors": array com até 3 cores predominantes em formato hexadecimal (ex: ["#FFFFFF", "#000000"])
 
-    const labels = response.labelAnnotations?.map((l: any) => l.description.toLowerCase()) || [];
-    const objects = response.localizedObjectAnnotations?.map((o: any) => o.name.toLowerCase()) || [];
-    const allDetected = [...labels, ...objects];
+Formato exato de resposta (JSON puro):
+{
+  "is_clothing": true,
+  "category": "top",
+  "sub_category": null,
+  "description": "...",
+  "style_tags": ["..."],
+  "warmth_level": 2,
+  "occasion": "casual",
+  "ai_detected_colors": ["#1A1A1A"]
+}`;
 
-    // --- STRICT VALIDATION ---
-    // Check blacklist first
-    const hasBlacklisted = allDetected.some(item =>
-      [...BLACKLIST].some(bl => item.includes(bl) || bl.includes(item))
-    );
+    const geminiPayload = {
+      contents: [{
+        parts: [
+          {
+            inline_data: {
+              mime_type: mimeType,
+              data: base64Data
+            }
+          },
+          {
+            text: prompt
+          }
+        ]
+      }],
+      generationConfig: {
+        temperature: 0.2,
+        maxOutputTokens: 1024,
+      }
+    };
 
-    // Check for specific clothing keyword (not just weak/generic ones)
-    const hasSpecificClothing = allDetected.some(item =>
-      [...CLOTHING_KEYWORDS].some(kw => item.includes(kw) || kw.includes(item))
-    );
+    // Try gemini-flash-latest first, fallback to gemini-3.8-flash if needed
+    const models = ['gemini-flash-latest', 'gemini-3.8-flash'];
+    let geminiResponseText = '';
+    let lastError = '';
 
-    // Only weak/generic matches don't count
-    const hasOnlyWeak = !hasSpecificClothing && allDetected.some(item =>
-      [...WEAK_KEYWORDS].some(kw => item.includes(kw) || kw.includes(item))
-    );
+    for (const model of models) {
+      try {
+        const res = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${GEMINI_API_KEY}`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(geminiPayload),
+          }
+        );
 
-    if (!hasSpecificClothing || (hasBlacklisted && !hasSpecificClothing)) {
-      console.log("NOT clothing. Labels:", labels, "Objects:", objects);
+        if (res.ok) {
+          const resData = await res.json();
+          geminiResponseText = resData.candidates?.[0]?.content?.parts?.[0]?.text || '';
+          if (geminiResponseText) break;
+        } else {
+          lastError = await res.text();
+          console.warn(`Model ${model} failed:`, res.status, lastError);
+        }
+      } catch (err) {
+        lastError = err instanceof Error ? err.message : String(err);
+        console.warn(`Fetch error with model ${model}:`, lastError);
+      }
+    }
+
+    if (!geminiResponseText) {
+      throw new Error(`Falha ao comunicar com Gemini AI: ${lastError}`);
+    }
+
+    // Clean JSON response
+    const cleanedJson = geminiResponseText
+      .replace(/```json\n?/g, '')
+      .replace(/```\n?/g, '')
+      .trim();
+
+    const parsed = JSON.parse(cleanedJson);
+
+    if (!parsed.is_clothing) {
       return new Response(JSON.stringify({
         error: 'not_clothing',
         message: 'Essa imagem não parece ser uma peça de roupa ou acessório. Por favor, envie uma foto de uma roupa, calçado ou acessório.',
-        raw_labels: labels,
-        raw_objects: objects,
       }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
-    // Extract dominant colors
-    const colors = response.imagePropertiesAnnotation?.dominantColors?.colors || [];
-    const detectedColors = colors.slice(0, 5).map((c: any) => {
-      const { red, green, blue } = c.color;
-      return `rgb(${Math.round(red || 0)}, ${Math.round(green || 0)}, ${Math.round(blue || 0)})`;
-    });
-
-    // Find best matching category
-    let detectedCategory = 'top';
-    let detectedSubCategory: string | null = null;
-    let confidence = 0;
-
-    for (const item of allDetected) {
-      for (const [key, value] of Object.entries(categoryMapping)) {
-        if (item.includes(key) || key.includes(item)) {
-          const labelAnnotation = response.labelAnnotations?.find(
-            (l: any) => l.description.toLowerCase().includes(key)
-          );
-          const score = labelAnnotation?.score || 0.5;
-          if (score > confidence) {
-            confidence = score;
-            detectedCategory = value.category;
-            detectedSubCategory = value.subCategory || null;
-          }
-        }
-      }
-    }
-
-    // Warmth level
-    let warmthLevel = 3;
-    const warmKw = ['wool', 'fleece', 'thick', 'warm', 'winter', 'sweater', 'coat', 'jacket', 'hoodie', 'parka'];
-    const coolKw = ['thin', 'light', 'summer', 'shorts', 'sandals', 'sleeveless', 'tank'];
-    if (allDetected.some(l => warmKw.some(w => l.includes(w)))) warmthLevel = 4;
-    else if (allDetected.some(l => coolKw.some(w => l.includes(w)))) warmthLevel = 2;
-
-    // Style tags
-    const styleTags = labels.filter((l: string) =>
-      ['casual', 'formal', 'sporty', 'elegant', 'vintage', 'modern', 'classic', 'street', 'bohemian'].includes(l)
-    );
-
-    // Occasion detection
-    const occasion = detectOccasion(allDetected, detectedCategory, detectedSubCategory);
-
-    const description = objects.length > 0
-      ? objects.join(', ')
-      : labels.slice(0, 3).join(', ');
-
     const result = {
-      category: detectedCategory,
-      sub_category: detectedSubCategory,
-      description,
-      style_tags: styleTags.length > 0 ? styleTags : ['casual'],
-      warmth_level: warmthLevel,
-      occasion,
-      ai_detected_colors: detectedColors,
-      ai_confidence: confidence,
-      raw_labels: labels,
-      raw_objects: objects,
+      category: parsed.category || 'top',
+      sub_category: parsed.sub_category || null,
+      description: parsed.description || 'Peça de vestuário',
+      style_tags: Array.isArray(parsed.style_tags) && parsed.style_tags.length > 0 ? parsed.style_tags : ['casual'],
+      warmth_level: typeof parsed.warmth_level === 'number' ? parsed.warmth_level : 2,
+      occasion: parsed.occasion || 'casual',
+      ai_detected_colors: parsed.ai_detected_colors || ['#000000'],
+      ai_confidence: 0.95,
     };
 
-    console.log("Analysis result:", JSON.stringify(result));
+    console.log("Analysis success:", JSON.stringify(result));
 
     return new Response(JSON.stringify(result), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

@@ -1,9 +1,16 @@
 import { create } from 'zustand';
-import { ClothingItem, Look, ClothingCategory } from '@/types/clothing';
-import { mockClothingItems, generateMockLooks, mockWeather } from '@/data/mockClothing';
+import { ClothingItem, ClothingCategory } from '@/types/clothing';
+import { generateMockLooks, mockWeather } from '@/data/mockClothing';
 import { SlotType, slotTypeToCategories } from '@/constants/slotCategories';
+import { supabase } from '@/integrations/supabase/client';
 
 export type LookId = 'A' | 'B' | 'C' | 'D';
+
+export interface WineSuggestion {
+  name: string;
+  vintage: string;
+  reason: string;
+}
 
 interface WardrobeState {
   clothes: ClothingItem[];
@@ -17,19 +24,25 @@ interface WardrobeState {
   wardrobePickerOpen: boolean;
   wardrobePickerLook: LookId | null;
   wardrobePickerSlot: SlotType | null;
+  loadingClothes: boolean;
+  aiConsultantLoading: boolean;
+  aiTip: string | null;
+  wineSuggestion: WineSuggestion | null;
   
   // Actions
+  loadUserClothes: (userId: string) => Promise<void>;
   initializeLooks: () => void;
   regenerateLook: (lookId: LookId) => void;
-  moveToDirty: (ids: string[]) => void;
-  moveToClean: (ids: string[]) => void;
+  generateAILooks: (weather: any, occasion: string) => Promise<void>;
+  moveToDirty: (ids: string[]) => Promise<void>;
+  moveToClean: (ids: string[]) => Promise<void>;
   removeFromLook: (lookId: LookId, itemId: string) => void;
   swapItem: (fromLook: LookId, toLook: LookId, itemId: string) => void;
   toggleLaundrySelection: (id: string) => void;
   clearLaundrySelection: () => void;
   confirmLook: (lookId: LookId) => void;
-  addClothing: (item: ClothingItem) => void;
-  removeClothing: (itemId: string) => void;
+  addClothing: (item: Omit<ClothingItem, 'id' | 'created_at'>, userId?: string) => Promise<void>;
+  removeClothing: (itemId: string) => Promise<void>;
   getDirtyClothes: () => ClothingItem[];
   openWardrobePicker: (lookId: LookId, slotType: SlotType) => void;
   closeWardrobePicker: () => void;
@@ -38,10 +51,11 @@ interface WardrobeState {
   addLook: (lookId: LookId) => void;
   removeLook: (lookId: LookId) => void;
   getLook: (lookId: LookId) => ClothingItem[];
+  clearUserData: () => void;
 }
 
 export const useWardrobeStore = create<WardrobeState>((set, get) => ({
-  clothes: mockClothingItems,
+  clothes: [],
   lookA: [],
   lookB: [],
   lookC: [],
@@ -52,47 +66,141 @@ export const useWardrobeStore = create<WardrobeState>((set, get) => ({
   wardrobePickerOpen: false,
   wardrobePickerLook: null,
   wardrobePickerSlot: null,
+  loadingClothes: false,
+  aiConsultantLoading: false,
+  aiTip: null,
+  wineSuggestion: null,
 
-  initializeLooks: async () => {
-    const { clothes, weather, profile } = get();
-    if (!profile) return;
-
-    set({ loading: true });
+  loadUserClothes: async (userId: string) => {
+    set({ loadingClothes: true });
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      const response = await fetch('https://oghyistixhqaupfuqpqd.supabase.co/functions/v1/generate-personal-styling', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session?.access_token}`
-        },
-        body: JSON.stringify({ clothes, weather })
-      });
+      console.log('Loading wardrobe for user:', userId);
+      const { data, error } = await supabase
+        .from('clothes')
+        .select('*')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false });
 
-      const styling = await response.json();
-      if (styling.error) throw new Error(styling.error);
+      if (error) {
+        console.error('Error fetching clothes from Supabase:', error);
+        return;
+      }
 
-      // Map IDs back to ClothingItems
-      const lookItems = styling.lookIds.map(id => clothes.find(c => c.id === id)).filter(Boolean);
-      
-      set({ 
-        lookA: lookItems, 
-        justificationA: styling.justification,
-        styleNameA: styling.styleName 
-      });
-      toast.success(`Look gerado: ${styling.styleName}`);
-    } catch (error: any) {
-      toast.error(error.message);
+      const userClothes: ClothingItem[] = (data || []).map((row: any) => ({
+        id: row.id,
+        user_id: row.user_id,
+        image_url: row.image_url,
+        description: row.description || 'Peça sem descrição',
+        warmth_level: row.warmth_level || 3,
+        style_tags: row.style_tags || ['casual'],
+        last_worn: row.last_worn,
+        category: row.category as ClothingCategory,
+        sub_category: row.sub_category,
+        occasion: row.occasion,
+        status: row.status,
+        created_at: row.created_at,
+      }));
+
+      set({ clothes: userClothes });
+      get().initializeLooks();
+    } catch (err) {
+      console.error('Unexpected error loading clothes:', err);
     } finally {
-      set({ loading: false });
+      set({ loadingClothes: false });
     }
   },
 
-  regenerateLook: async (lookId: LookId) => {
-    // Mesma lógica da initializeLooks mas focada em um ID específico
-    // ... (implementarei similar à anterior)
+  clearUserData: () => {
+    set({
+      clothes: [],
+      lookA: [],
+      lookB: [],
+      lookC: [],
+      lookD: [],
+      selectedLaundryItems: [],
+      aiTip: null,
+      wineSuggestion: null,
+    });
   },
 
+  initializeLooks: () => {
+    const { clothes } = get();
+    if (clothes.length === 0) {
+      set({ lookA: [], lookB: [], lookC: [], lookD: [] });
+      return;
+    }
+    const { lookA, lookB } = generateMockLooks(clothes);
+    set({ lookA, lookB, lookC: [], lookD: [] });
+  },
+
+  regenerateLook: (lookId: LookId) => {
+    const state = get();
+    const cleanClothes = state.clothes.filter(c => c.status === 'clean');
+    if (cleanClothes.length === 0) return;
+    
+    // Get IDs already used in OTHER visible looks
+    const otherLooks = (['A', 'B', 'C', 'D'] as LookId[])
+      .filter(id => id !== lookId)
+      .flatMap(id => state.getLook(id).map(i => i.id));
+    
+    const available = cleanClothes.filter(c => !otherLooks.includes(c.id));
+    const pool = available.length > 0 ? available : cleanClothes;
+    
+    const tops = pool.filter(c => c.category === 'top');
+    const bottoms = pool.filter(c => c.category === 'bottom');
+    const shoes = pool.filter(c => c.category === 'shoes');
+    const accessories = pool.filter(c => c.category === 'accessory');
+    
+    const pick = <T,>(arr: T[]) => arr.length ? arr[Math.floor(Math.random() * arr.length)] : undefined;
+    const newLook = [pick(tops), pick(bottoms), pick(shoes), pick(accessories)].filter(Boolean) as ClothingItem[];
+    
+    const lookKey = `look${lookId}` as 'lookA' | 'lookB' | 'lookC' | 'lookD';
+    set({ [lookKey]: newLook });
+  },
+
+  generateAILooks: async (weather: any, occasion: string = 'casual') => {
+    const state = get();
+    const cleanClothes = state.clothes.filter(c => c.status === 'clean');
+
+    if (cleanClothes.length === 0) {
+      throw new Error('Você precisa ter roupas limpas cadastradas para a IA montar os looks.');
+    }
+
+    set({ aiConsultantLoading: true });
+    try {
+      const { data, error } = await supabase.functions.invoke('fashion-consultant', {
+        body: {
+          clothes: cleanClothes,
+          weather: weather || { temperature: 22, condition: 'Clear', description: 'agradável' },
+          laundryItems: state.getDirtyClothes(),
+          occasion,
+          numberOfLooks: 2,
+        },
+      });
+
+      if (error) throw error;
+
+      if (data?.success && data.looks && data.looks.length > 0) {
+        const looks = data.looks;
+        set({
+          lookA: looks[0]?.items || [],
+          lookB: looks[1]?.items || [],
+          aiTip: data.tips || null,
+          wineSuggestion: data.wine || null,
+        });
+        return;
+      }
+
+      // Fallback
+      state.initializeLooks();
+    } catch (err) {
+      console.warn('AI consultant request error, falling back to local generator:', err);
+      state.initializeLooks();
+      throw err;
+    } finally {
+      set({ aiConsultantLoading: false });
+    }
+  },
   
   getLook: (lookId: LookId) => {
     const state = get();
@@ -115,17 +223,36 @@ export const useWardrobeStore = create<WardrobeState>((set, get) => ({
     }));
   },
 
-  moveToDirty: (ids: string[]) => {
+  moveToDirty: async (ids: string[]) => {
+    const now = new Date().toISOString();
+    try {
+      await supabase
+        .from('clothes')
+        .update({ status: 'dirty', last_worn: now })
+        .in('id', ids);
+    } catch (err) {
+      console.error('Error moving to dirty in Supabase:', err);
+    }
+
     set((state) => ({
       clothes: state.clothes.map(item =>
         ids.includes(item.id)
-          ? { ...item, status: 'dirty' as const, last_worn: new Date().toISOString() }
+          ? { ...item, status: 'dirty' as const, last_worn: now }
           : item
       ),
     }));
   },
 
-  moveToClean: (ids: string[]) => {
+  moveToClean: async (ids: string[]) => {
+    try {
+      await supabase
+        .from('clothes')
+        .update({ status: 'clean' })
+        .in('id', ids);
+    } catch (err) {
+      console.error('Error moving to clean in Supabase:', err);
+    }
+
     set((state) => ({
       clothes: state.clothes.map(item =>
         ids.includes(item.id)
@@ -158,13 +285,11 @@ export const useWardrobeStore = create<WardrobeState>((set, get) => ({
       const item = sourceLook.find(i => i.id === itemId);
       if (!item) return state;
 
-      // Find if there's an item of same category in target
       const sameCategory = targetLook.find(i => i.category === item.category);
       
       const newSourceLook = sourceLook.filter(i => i.id !== itemId);
       let newTargetLook = [...targetLook, item];
       
-      // If same category exists in target, swap them
       if (sameCategory) {
         newTargetLook = targetLook.map(i => i.id === sameCategory.id ? item : i);
         newSourceLook.push(sameCategory);
@@ -194,19 +319,68 @@ export const useWardrobeStore = create<WardrobeState>((set, get) => ({
     const look = state.getLook(lookId);
     const ids = look.map(item => item.id);
     
-    // Move items to dirty and clear the look, but keep it visible
     state.moveToDirty(ids);
     const lookKey = `look${lookId}` as 'lookA' | 'lookB' | 'lookC' | 'lookD';
     set({ [lookKey]: [] });
   },
 
-  addClothing: (item: ClothingItem) => {
-    set((state) => ({
-      clothes: [...state.clothes, item],
-    }));
+  addClothing: async (item: Omit<ClothingItem, 'id' | 'created_at'>, userId?: string) => {
+    try {
+      if (userId) {
+        const { data, error } = await supabase
+          .from('clothes')
+          .insert({
+            user_id: userId,
+            image_url: item.image_url,
+            description: item.description,
+            warmth_level: item.warmth_level,
+            style_tags: item.style_tags,
+            category: item.category,
+            sub_category: item.sub_category,
+            status: item.status || 'clean',
+          })
+          .select()
+          .single();
+
+        if (error) throw error;
+
+        if (data) {
+          const newItem: ClothingItem = {
+            id: data.id,
+            user_id: data.user_id,
+            image_url: data.image_url,
+            description: data.description || item.description,
+            warmth_level: data.warmth_level,
+            style_tags: data.style_tags || [],
+            category: data.category as ClothingCategory,
+            sub_category: data.sub_category,
+            last_worn: data.last_worn,
+            status: data.status,
+            created_at: data.created_at,
+          };
+          set((state) => ({ clothes: [newItem, ...state.clothes] }));
+          return;
+        }
+      }
+    } catch (err) {
+      console.error('Failed to insert into Supabase clothes, saving locally:', err);
+    }
+
+    const fallbackItem: ClothingItem = {
+      ...item,
+      id: Date.now().toString(),
+      created_at: new Date().toISOString(),
+    };
+    set((state) => ({ clothes: [fallbackItem, ...state.clothes] }));
   },
 
-  removeClothing: (itemId: string) => {
+  removeClothing: async (itemId: string) => {
+    try {
+      await supabase.from('clothes').delete().eq('id', itemId);
+    } catch (err) {
+      console.error('Error deleting clothing from Supabase:', err);
+    }
+
     set((state) => ({
       clothes: state.clothes.filter(c => c.id !== itemId),
       lookA: state.lookA.filter(c => c.id !== itemId),
@@ -233,10 +407,8 @@ export const useWardrobeStore = create<WardrobeState>((set, get) => ({
       const lookKey = `look${lookId}` as 'lookA' | 'lookB' | 'lookC' | 'lookD';
       const look = state[lookKey];
       
-      // Check if item already in the look
       if (look.some(i => i.id === item.id)) return state;
       
-      // Remove existing item of same category from look
       const filteredLook = look.filter(i => i.category !== item.category);
       
       return {

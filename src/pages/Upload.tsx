@@ -10,6 +10,7 @@ import { Camera, Upload as UploadIcon, Sparkles, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { OccasionSelector } from '@/components/OccasionSelector';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
 
 const categories: { value: ClothingCategory; label: string }[] = [
   { value: 'top', label: 'Parte de Cima' },
@@ -104,37 +105,46 @@ export default function UploadPage() {
     }
   };
 
-  const handleSubmit = () => {
+  const { user } = useAuth();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleSubmit = async () => {
     if (!imagePreview || !category) {
       toast.error('Preencha todos os campos obrigatórios');
       return;
     }
 
-    const newItem: ClothingItem = {
-      id: Date.now().toString(),
-      image_url: imagePreview,
-      description,
-      warmth_level: warmthLevel,
-      style_tags: styleTags.split(',').map(t => t.trim()).filter(Boolean),
-      last_worn: null,
-      category: category as ClothingCategory,
-      sub_category: category === 'accessory' ? (subCategory as AccessorySubCategory) : undefined,
-      occasion: occasion ?? undefined,
-      status: 'clean',
-      created_at: new Date().toISOString(),
-    };
+    setIsSubmitting(true);
+    try {
+      const newItem = {
+        image_url: imagePreview,
+        description: description || 'Peça sem descrição',
+        warmth_level: warmthLevel,
+        style_tags: styleTags.split(',').map(t => t.trim()).filter(Boolean),
+        last_worn: null,
+        category: category as ClothingCategory,
+        sub_category: category === 'accessory' ? (subCategory as AccessorySubCategory) : undefined,
+        occasion: occasion ?? undefined,
+        status: 'clean' as const,
+      };
 
-    addClothing(newItem);
-    toast.success('Peça adicionada ao guarda-roupa!', { icon: '👕' });
-    
-    // Reset form
-    setImagePreview(null);
-    setCategory('');
-    setSubCategory('');
-    setDescription('');
-    setWarmthLevel(2);
-    setStyleTags('');
-    setOccasion(null);
+      await addClothing(newItem, user?.id);
+      toast.success('Peça adicionada ao seu guarda-roupa!', { icon: '👕' });
+      
+      // Reset form
+      setImagePreview(null);
+      setCategory('');
+      setSubCategory('');
+      setDescription('');
+      setWarmthLevel(2);
+      setStyleTags('');
+      setOccasion(null);
+    } catch (err) {
+      console.error('Error saving clothing:', err);
+      toast.error('Erro ao salvar peça.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const clearImage = () => {
@@ -292,10 +302,10 @@ export default function UploadPage() {
           <Button
             onClick={handleSubmit}
             className="w-full bg-primary hover:bg-primary/90"
-            disabled={!imagePreview || !category}
+            disabled={!imagePreview || !category || isSubmitting}
           >
             <UploadIcon className="w-4 h-4 mr-2" />
-            Adicionar ao Guarda-Roupa
+            {isSubmitting ? 'Salvando no guarda-roupa...' : 'Adicionar ao Guarda-Roupa'}
           </Button>
         </div>
       </motion.div>

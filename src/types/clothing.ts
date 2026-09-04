@@ -8,6 +8,7 @@ export type ClothingOccasion = 'casual' | 'especiais' | 'diario' | 'trabalho';
 
 export interface ClothingItem {
   id: string;
+  user_id?: string;
   image_url: string;
   description: string;
   warmth_level: number; // 1-5, 1 = very light, 5 = very warm

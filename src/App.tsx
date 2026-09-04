@@ -12,6 +12,7 @@ import ApiKeys from "./pages/ApiKeys";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 import { BottomNav } from "./components/BottomNav";
+import { PWAInstallPrompt } from "./components/PWAInstallPrompt";
 
 const queryClient = new QueryClient();
 
@@ -56,6 +57,7 @@ const AppRoutes = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <PWAInstallPrompt />
       <Routes>
         <Route path="/auth" element={<AuthRoute><Auth /></AuthRoute>} />
         <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />

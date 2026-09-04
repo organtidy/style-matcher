@@ -158,10 +158,13 @@ const ApiKeys = () => {
           </div>
         </div>
 
-        <div className="rounded-xl border border-border bg-card p-4">
-          <p className="text-sm text-muted-foreground">
-            🔒 Suas chaves são salvas de forma segura no servidor e protegidas por RLS.
-            Apenas você pode acessá-las.
+        <div className="rounded-xl border border-primary/30 bg-primary/5 p-4 space-y-2">
+          <div className="flex items-center gap-2 text-primary font-medium text-sm">
+            <CheckCircle className="w-4 h-4" />
+            <span>IA Ativa no Servidor</span>
+          </div>
+          <p className="text-xs text-muted-foreground leading-relaxed">
+            O Personal Stylist já está configurado com <strong>Google Gemini AI</strong> e <strong>Previsão do Tempo</strong> globais no servidor. Você não precisa configurar nada para usar todos os recursos.
           </p>
         </div>
 

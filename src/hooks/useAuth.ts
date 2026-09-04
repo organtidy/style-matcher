@@ -7,7 +7,7 @@ export type Profile = {
   email: string;
   plan_type: 'free' | 'pro' | 'ultra';
   subscription_status: string;
-}
+};
 
 export function useAuth() {
   const [user, setUser] = useState<User | null>(null);
@@ -16,13 +16,17 @@ export function useAuth() {
   const [loading, setLoading] = useState(true);
 
   const fetchProfile = async (userId: string) => {
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', userId)
-      .single();
-    
-    if (data) setProfile(data);
+    try {
+      const { data } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .maybeSingle();
+
+      if (data) setProfile(data as Profile);
+    } catch (e) {
+      console.debug('No profile found or error:', e);
+    }
   };
 
   useEffect(() => {
@@ -76,4 +80,3 @@ export function useAuth() {
 
   return { user, profile, session, loading, signIn, signUp, signOut };
 }
-

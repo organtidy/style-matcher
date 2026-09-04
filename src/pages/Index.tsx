@@ -4,7 +4,7 @@ import { WeatherWidget } from '@/components/WeatherWidget';
 import { DuelMode } from '@/components/DuelMode';
 import { OccasionSelector } from '@/components/OccasionSelector';
 import { motion } from 'framer-motion';
-import { Sparkles, RefreshCw, MapPin, Loader2 } from 'lucide-react';
+import { Sparkles, RefreshCw, MapPin, Loader2, Wine, PlusCircle, Shirt } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
@@ -12,14 +12,26 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { useWeather } from '@/hooks/useWeather';
 import { useAuth } from '@/hooks/useAuth';
 import { ClothingOccasion } from '@/types/clothing';
+import { useAuth } from '@/hooks/useAuth';
+import { useNavigate } from 'react-router-dom';
 
 const Index = () => {
+  const { user, profile } = useAuth();
+  const navigate = useNavigate();
+
   const {
+    clothes,
     lookA,
     lookB,
     lookC,
     lookD,
     visibleLooks,
+    loadUserClothes,
+    loadingClothes,
+    aiConsultantLoading,
+    generateAILooks,
+    aiTip,
+    wineSuggestion,
     initializeLooks,
     removeFromLook,
     confirmLook,
@@ -41,8 +53,10 @@ const Index = () => {
   const { profile } = useAuth();
 
   useEffect(() => {
-    initializeLooks();
-  }, [initializeLooks]);
+    if (user?.id) {
+      loadUserClothes(user.id);
+    }
+  }, [user?.id, loadUserClothes]);
 
   const handleConfirmLook = (lookId: LookId) => {
     confirmLook(lookId);
@@ -51,9 +65,28 @@ const Index = () => {
     });
   };
 
-  const handleRefresh = () => {
+  const handleRefreshRandom = () => {
+    if (clothes.length === 0) {
+      toast.info('Adicione roupas primeiro para gerar combinações!');
+      return;
+    }
     initializeLooks();
-    toast.success('Novos looks gerados!', { icon: '✨' });
+    toast.success('Looks recombinados!', { icon: '🎲' });
+  };
+
+  const handleGenerateAI = async () => {
+    if (clothes.length === 0) {
+      toast.info('Seu guarda-roupa está vazio. Adicione suas peças primeiro!', { icon: '📸' });
+      navigate('/upload');
+      return;
+    }
+
+    try {
+      await generateAILooks(weather, selectedOccasion || 'casual');
+      toast.success('Consultor IA estilizou seus looks!', { icon: '✨' });
+    } catch (err: any) {
+      toast.error(err.message || 'Erro ao consultar a IA.');
+    }
   };
 
   const availableItems = wardrobePickerSlot && wardrobePickerLook 
@@ -86,7 +119,7 @@ const Index = () => {
       >
         {/* Plan Status Badge */}
         {profile && (
-          <div className="flex justify-end mb-2">
+          <div className="flex justify-end mb-1">
             <div className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border flex items-center gap-1 ${
               profile.plan_type === 'ultra' ? 'bg-purple-500/10 text-purple-500 border-purple-500/20' :
               profile.plan_type === 'pro' ? 'bg-amber-500/10 text-amber-500 border-amber-500/20' :
@@ -97,8 +130,6 @@ const Index = () => {
             </div>
           </div>
         )}
-
-
         {weatherLoading ? (
           <div className="weather-widget weather-gradient flex items-center justify-center gap-2">
             <Loader2 className="w-5 h-5 animate-spin text-primary" />
@@ -138,7 +169,8 @@ const Index = () => {
           title="Ocasiões"
         />
 
-        <div className="flex items-center justify-between">
+        {/* AI Action Header */}
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 pt-1">
           <div className="flex items-center gap-2">
             <Sparkles className="w-5 h-5 text-primary" />
             <h2 className="section-title">
@@ -148,31 +180,117 @@ const Index = () => {
               }
             </h2>
           </div>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={handleRefresh}
-            className="text-muted-foreground hover:text-primary"
-          >
-            <RefreshCw className="w-4 h-4" />
-          </Button>
+
+          <div className="flex items-center gap-2">
+            <Button
+              onClick={handleGenerateAI}
+              disabled={aiConsultantLoading || loadingClothes}
+              size="sm"
+              className="bg-primary hover:bg-primary/90 text-primary-foreground font-medium shadow-md gap-1.5 flex-1 sm:flex-initial"
+            >
+              {aiConsultantLoading ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <span>Consultando IA...</span>
+                </>
+              ) : (
+                <>
+                  <Sparkles className="w-4 h-4" />
+                  <span>Consultor IA</span>
+                </>
+              )}
+            </Button>
+
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={handleRefreshRandom}
+              title="Recombinar aleatório"
+              className="shrink-0 border-border/60 hover:text-primary"
+            >
+              <RefreshCw className="w-4 h-4" />
+            </Button>
+          </div>
         </div>
 
-        <p className="text-sm text-muted-foreground">
-          Arraste peças entre os looks ou toque nos slots para adicionar
-        </p>
+        {/* AI Tips Banner */}
+        {aiTip && (
+          <motion.div
+            initial={{ opacity: 0, y: 5 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="p-3.5 rounded-xl border border-primary/20 bg-primary/5 flex items-start gap-3"
+          >
+            <Sparkles className="w-5 h-5 text-primary shrink-0 mt-0.5" />
+            <div className="space-y-0.5">
+              <p className="text-xs font-semibold text-primary uppercase tracking-wide">Dica do Consultor IA</p>
+              <p className="text-xs text-foreground/90 leading-relaxed">{aiTip}</p>
+            </div>
+          </motion.div>
+        )}
 
-        <DuelMode
-          looks={looks}
-          visibleLooks={visibleLooks}
-          onRemoveFromLook={removeFromLook}
-          onAddToLook={openWardrobePicker}
-          onConfirmLook={handleConfirmLook}
-          onSwapItem={swapItem}
-          onAddLook={addLook}
-          onRemoveLook={removeLook}
-          onRegenerateLook={regenerateLook}
-        />
+        {/* Wine Recommendation Banner */}
+        {wineSuggestion && (
+          <motion.div
+            initial={{ opacity: 0, y: 5 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="p-3.5 rounded-xl border border-amber-500/20 bg-amber-500/5 flex items-start gap-3"
+          >
+            <Wine className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
+            <div className="space-y-0.5">
+              <p className="text-xs font-semibold text-amber-500 uppercase tracking-wide">
+                Harmonização de Vinho: {wineSuggestion.name} ({wineSuggestion.vintage})
+              </p>
+              <p className="text-xs text-foreground/90 leading-relaxed">{wineSuggestion.reason}</p>
+            </div>
+          </motion.div>
+        )}
+
+        {/* Empty Wardrobe Notification */}
+        {!loadingClothes && clothes.length === 0 && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="rounded-2xl border border-dashed border-border/80 p-8 text-center space-y-3 bg-card/40"
+          >
+            <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mx-auto text-primary">
+              <Shirt className="w-6 h-6" />
+            </div>
+            <div className="space-y-1">
+              <h3 className="text-sm font-semibold text-foreground">Seu guarda-roupa ainda não tem peças</h3>
+              <p className="text-xs text-muted-foreground max-w-xs mx-auto">
+                Adicione fotos das suas roupas para o Consultor IA identificar as peças e sugerir looks perfeitos para você.
+              </p>
+            </div>
+            <Button
+              onClick={() => navigate('/upload')}
+              size="sm"
+              className="gap-2 bg-primary hover:bg-primary/90"
+            >
+              <PlusCircle className="w-4 h-4" />
+              Adicionar primeira peça
+            </Button>
+          </motion.div>
+        )}
+
+        {clothes.length > 0 && (
+          <>
+            <p className="text-xs text-muted-foreground">
+              Arraste peças entre os looks ou toque nos slots para personalizar seu visual
+            </p>
+
+            <DuelMode
+              looks={looks}
+              visibleLooks={visibleLooks}
+              onRemoveFromLook={removeFromLook}
+              onAddToLook={openWardrobePicker}
+              onConfirmLook={handleConfirmLook}
+              onSwapItem={swapItem}
+              onAddLook={addLook}
+              onRemoveLook={removeLook}
+              onRegenerateLook={regenerateLook}
+            />
+          </>
+        )}
       </motion.div>
 
       {/* Wardrobe Picker Sheet */}
