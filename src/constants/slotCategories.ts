@@ -1,6 +1,6 @@
 import { ClothingCategory } from '@/types/clothing';
 
-export type SlotType = 'head' | 'top' | 'bottom' | 'shoes' | 'accessory-left' | 'accessory-right';
+export type SlotType = 'head' | 'top' | 'bottom' | 'shoes' | 'accessory-left' | 'accessory-right' | 'body';
 
 /** Maps each mannequin slot to the clothing categories it accepts */
 export const slotTypeToCategories: Record<SlotType, ClothingCategory[]> = {
@@ -10,4 +10,5 @@ export const slotTypeToCategories: Record<SlotType, ClothingCategory[]> = {
   'shoes': ['shoes'],
   'accessory-left': ['accessory'],
   'accessory-right': ['accessory'],
+  'body': ['dress'],
 };

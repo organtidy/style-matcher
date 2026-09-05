@@ -131,7 +131,7 @@ export function PWAInstallPrompt() {
               </h3>
               <p className="text-xs text-muted-foreground flex items-center gap-1">
                 <Smartphone className="w-3.5 h-3.5 text-primary" />
-                {isIOS ? 'Instalar no iPhone / iPad' : 'Baixar como Aplicativo'}
+                {isIOS ? 'Instalar no celular como app' : 'Baixar como Aplicativo'}
               </p>
             </div>
           </div>
@@ -235,7 +235,7 @@ export function PWAInstallPrompt() {
                 {isIOS ? (
                   <>
                     <Share className="w-4 h-4" />
-                    <span>Instalar no iPhone / iPad</span>
+                    <span>Instalar no celular como app</span>
                   </>
                 ) : (
                   <>

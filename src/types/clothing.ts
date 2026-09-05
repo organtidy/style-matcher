@@ -1,4 +1,4 @@
-export type ClothingCategory = 'top' | 'bottom' | 'shoes' | 'outerwear' | 'accessory';
+export type ClothingCategory = 'top' | 'bottom' | 'shoes' | 'outerwear' | 'accessory' | 'dress';
 
 export type AccessorySubCategory = 'bone' | 'brinco' | 'pulseira' | 'relogio' | 'oculos' | 'colar' | 'outro';
 

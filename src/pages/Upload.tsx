@@ -18,6 +18,7 @@ const categories: { value: ClothingCategory; label: string }[] = [
   { value: 'shoes', label: 'Calçados' },
   { value: 'outerwear', label: 'Casacos/Jaquetas' },
   { value: 'accessory', label: 'Acessórios' },
+  { value: 'dress', label: 'Vestido' },
 ];
 
 const accessorySubCategories: { value: AccessorySubCategory; label: string }[] = [

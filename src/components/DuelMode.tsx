@@ -275,6 +275,7 @@ function getCategoryLabel(category: ClothingCategory): string {
     shoes: 'Calçado',
     outerwear: 'Casaco',
     accessory: 'Acessório',
+    dress: 'Vestido',
   };
   return labels[category];
 }
