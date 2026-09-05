@@ -8,6 +8,8 @@
     "build": "vite build",
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "lint:types": "eslint --config eslint.typed.config.mjs .",
     "preview": "vite preview"
   },
   "dependencies": {
@@ -77,8 +79,13 @@
     "@vitejs/plugin-react-swc": "^3.11.0",
     "autoprefixer": "^10.4.21",
     "eslint": "^9.32.0",
+    "eslint-import-resolver-typescript": "^3.8.3",
+    "eslint-plugin-import-x": "^4.16.1",
+    "eslint-plugin-jsx-a11y": "^6.10.2",
+    "eslint-plugin-react": "^7.37.4",
     "eslint-plugin-react-hooks": "^5.2.0",
     "eslint-plugin-react-refresh": "^0.4.20",
+    "eslint-plugin-security": "^3.0.1",
     "globals": "^15.15.0",
     "postcss": "^8.5.6",
     "tailwindcss": "^3.4.17",
