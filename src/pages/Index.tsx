@@ -243,52 +243,51 @@ const Index = () => {
           </motion.div>
         )}
 
-        {/* Empty Wardrobe Notification */}
+        {/* Empty Wardrobe Notification Banner */}
         {!loadingClothes && clothes.length === 0 && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="rounded-2xl border border-dashed border-border/80 p-8 text-center space-y-3 bg-card/40"
+            className="rounded-xl border border-dashed border-primary/40 p-4 text-center space-y-2 bg-primary/5 flex flex-col sm:flex-row items-center justify-between gap-3"
           >
-            <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mx-auto text-primary">
-              <Shirt className="w-6 h-6" />
-            </div>
-            <div className="space-y-1">
-              <h3 className="text-sm font-semibold text-foreground">Seu guarda-roupa ainda não tem peças</h3>
-              <p className="text-xs text-muted-foreground max-w-xs mx-auto">
-                Adicione fotos das suas roupas para o Consultor IA identificar as peças e sugerir looks perfeitos para você.
-              </p>
+            <div className="flex items-center gap-3 text-left">
+              <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0 text-primary">
+                <Shirt className="w-5 h-5" />
+              </div>
+              <div className="space-y-0.5">
+                <h3 className="text-xs font-semibold text-foreground">Monte seu guarda-roupa virtual</h3>
+                <p className="text-[11px] text-muted-foreground">
+                  Toque nos slots do manequim 3D abaixo ou adicione novas fotos de roupas.
+                </p>
+              </div>
             </div>
             <Button
               onClick={() => navigate('/upload')}
               size="sm"
-              className="gap-2 bg-primary hover:bg-primary/90"
+              className="gap-2 bg-primary hover:bg-primary/90 text-xs shrink-0"
             >
-              <PlusCircle className="w-4 h-4" />
-              Adicionar primeira peça
+              <PlusCircle className="w-3.5 h-3.5" />
+              Adicionar Peça
             </Button>
           </motion.div>
         )}
 
-        {clothes.length > 0 && (
-          <>
-            <p className="text-xs text-muted-foreground">
-              Arraste peças entre os looks ou toque nos slots para personalizar seu visual
-            </p>
+        <p className="text-xs text-muted-foreground">
+          Arraste peças entre os looks ou toque nos slots do manequim 3D para personalizar seu visual
+        </p>
 
-            <DuelMode
-              looks={looks}
-              visibleLooks={visibleLooks}
-              onRemoveFromLook={removeFromLook}
-              onAddToLook={openWardrobePicker}
-              onConfirmLook={handleConfirmLook}
-              onSwapItem={swapItem}
-              onAddLook={addLook}
-              onRemoveLook={removeLook}
-              onRegenerateLook={regenerateLook}
-            />
-          </>
-        )}
+        <DuelMode
+          looks={looks}
+          visibleLooks={visibleLooks}
+          onRemoveFromLook={removeFromLook}
+          onAddToLook={openWardrobePicker}
+          onConfirmLook={handleConfirmLook}
+          onSwapItem={swapItem}
+          onAddLook={addLook}
+          onRemoveLook={removeLook}
+          onRegenerateLook={regenerateLook}
+        />
+
       </motion.div>
 
       {/* Wardrobe Picker Sheet */}
