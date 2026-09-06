@@ -172,7 +172,6 @@ export function ManequimLookCard({
   activeId,
   activeCategory 
 }: ManequimLookCardProps) {
-  const [gender, setGender] = useState<'man' | 'woman'>('woman');
   const [isDressActive, setIsDressActive] = useState(false);
 
   // Organize items by slot
@@ -222,37 +221,20 @@ export function ManequimLookCard({
           </div>
         </div>
 
-        {/* Gender and Dress Toggles */}
-        <div className="flex flex-wrap gap-4 items-center mt-1">
-          <div className="flex items-center space-x-2">
-            <Label htmlFor={`${id}-gender-toggle`} className="text-xs text-muted-foreground">Homem</Label>
-            <Switch 
-              id={`${id}-gender-toggle`} 
-              checked={gender === 'woman'}
-              onCheckedChange={(checked) => {
-                setGender(checked ? 'woman' : 'man');
-                if (!checked) setIsDressActive(false);
-              }}
-            />
-            <Label htmlFor={`${id}-gender-toggle`} className="text-xs text-muted-foreground">Mulher</Label>
-          </div>
-
-          {gender === 'woman' && (
-            <div className="flex items-center space-x-2 border-l border-border/50 pl-4">
-              <Label htmlFor={`${id}-dress-toggle`} className="text-xs text-muted-foreground">Multi Peças</Label>
-              <Switch 
-                id={`${id}-dress-toggle`} 
-                checked={isDressActive}
-                onCheckedChange={setIsDressActive}
-              />
-              <Label htmlFor={`${id}-dress-toggle`} className="text-xs text-muted-foreground">Vestido</Label>
-            </div>
-          )}
+        {/* Dress Toggle */}
+        <div className="flex items-center space-x-2 mt-1">
+          <Label htmlFor={`${id}-dress-toggle`} className="text-xs text-muted-foreground">Multi Peças</Label>
+          <Switch 
+            id={`${id}-dress-toggle`} 
+            checked={isDressActive}
+            onCheckedChange={setIsDressActive}
+          />
+          <Label htmlFor={`${id}-dress-toggle`} className="text-xs text-muted-foreground">Vestido</Label>
         </div>
       </div>
 
       {/* Slots Layout */}
-      {gender === 'woman' && isDressActive ? (
+      {isDressActive ? (
         /* Vestido Mode: ONLY 2 SLOTS (Vestido e Sapatos) */
         <div className="flex-1 flex flex-col items-center justify-center gap-4 py-4">
           <DroppableSlot
