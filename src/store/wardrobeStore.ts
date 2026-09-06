@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { ClothingItem, ClothingCategory } from '@/types/clothing';
-import { generateMockLooks, mockWeather } from '@/data/mockClothing';
+import { mockClothingItems, generateMockLooks, mockWeather } from '@/data/mockClothing';
 import { SlotType, slotTypeToCategories } from '@/constants/slotCategories';
 import { supabase } from '@/integrations/supabase/client';
 
