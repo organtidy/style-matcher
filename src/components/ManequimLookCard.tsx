@@ -2,16 +2,14 @@ import { useState } from 'react';
 import { ClothingItem, ClothingCategory } from '@/types/clothing';
 import { useDroppable } from '@dnd-kit/core';
 import { Button } from '@/components/ui/button';
-import { Check, X, Plus, RefreshCw } from 'lucide-react';
+import { Check, X, Plus, RefreshCw, User } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { SlotType, slotTypeToCategories as slotCategories } from '@/constants/slotCategories';
-import { Silhouette } from './ui/Silhouettes';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 
-// Re-export SlotType for backward compat
 export type { SlotType };
 
 interface DraggableSlotItemProps {
@@ -38,15 +36,18 @@ function DraggableSlotItem({ item, slotType, onRemove, isDragging }: DraggableSl
     transition,
   };
 
+  const isAccessorySlot = slotType.startsWith('accessory-');
+  const isHeadSlot = slotType === 'head';
+
   return (
     <div
       ref={setNodeRef}
       style={style}
       {...attributes}
       {...listeners}
-      className={`relative touch-action-none cursor-grab active:cursor-grabbing w-full h-full ${
+      className={`relative touch-action-none cursor-grab active:cursor-grabbing rounded-md overflow-hidden ${
         isDragging ? 'opacity-50' : ''
-      }`}
+      } ${isAccessorySlot ? 'w-16 h-16' : isHeadSlot ? 'w-20 h-20' : 'w-full h-full'}`}
     >
       <img
         src={item.image_url}
@@ -59,7 +60,7 @@ function DraggableSlotItem({ item, slotType, onRemove, isDragging }: DraggableSl
           e.stopPropagation();
           onRemove();
         }}
-        className="absolute top-0 right-0 w-5 h-5 bg-destructive/90 rounded-full flex items-center justify-center text-white hover:bg-destructive transition-colors z-10"
+        className="absolute top-1 right-1 w-5 h-5 bg-destructive/90 rounded-full flex items-center justify-center text-white hover:bg-destructive transition-colors z-10"
       >
         <X className="w-3 h-3" />
       </button>
@@ -75,31 +76,54 @@ interface DroppableSlotProps {
   onAddItem: (slotType: SlotType) => void;
   activeId?: string | null;
   activeCategory?: ClothingCategory | null;
+  label: string;
+  className?: string;
 }
 
-function DroppableSlot({ slotId, slotType, item, onRemoveItem, onAddItem, activeId, activeCategory }: DroppableSlotProps) {
+function DroppableSlot({
+  slotId,
+  slotType,
+  item,
+  onRemoveItem,
+  onAddItem,
+  activeId,
+  activeCategory,
+  label,
+  className = '',
+}: DroppableSlotProps) {
   const { setNodeRef, isOver } = useDroppable({ 
     id: slotId,
     data: { slotType, acceptedCategories: slotCategories[slotType] }
   });
 
-  // Check if the active item can be dropped here
-  const canAcceptDrop = activeCategory && slotCategories[slotType].includes(activeCategory);
+  const canAcceptDrop = activeCategory && slotCategories[slotType]?.includes(activeCategory);
   const showDropIndicator = isOver && canAcceptDrop;
   const showInvalidDrop = isOver && !canAcceptDrop;
+
+  const isAccessorySlot = slotType.startsWith('accessory-');
+  const isHeadSlot = slotType === 'head';
+  const isBodySlot = slotType === 'body';
 
   return (
     <div
       ref={setNodeRef}
-      className={`w-full h-full rounded-md transition-all duration-200 flex items-center justify-center ${
+      className={`relative flex items-center justify-center border-2 border-dashed rounded-lg transition-all duration-200 ${
         showDropIndicator 
-          ? 'ring-2 ring-primary bg-primary/20 scale-105' 
+          ? 'border-primary bg-primary/20 scale-105' 
           : showInvalidDrop
-            ? 'ring-2 ring-destructive bg-destructive/10'
+            ? 'border-destructive bg-destructive/10'
             : item 
-              ? '' 
-              : 'hover:bg-primary/10 cursor-pointer'
-      }`}
+              ? 'border-transparent' 
+              : 'border-muted-foreground/30 bg-muted/20 hover:border-primary/50 hover:bg-primary/10 cursor-pointer'
+      } ${
+        isAccessorySlot 
+          ? 'w-16 h-16' 
+          : isHeadSlot 
+            ? 'w-20 h-20 mx-auto' 
+            : isBodySlot
+              ? 'w-32 h-48 mx-auto'
+              : 'w-full aspect-square'
+      } ${className}`}
       onClick={() => {
         if (!item) {
           onAddItem(slotType);
@@ -114,8 +138,11 @@ function DroppableSlot({ slotId, slotType, item, onRemoveItem, onAddItem, active
           isDragging={activeId === item.id}
         />
       ) : (
-        <div className="w-full h-full flex items-center justify-center pointer-events-none">
-          <Plus className="w-4 h-4 text-primary/50" />
+        <div className="flex flex-col items-center justify-center gap-1 p-2 text-center">
+          <Plus className="w-4 h-4 text-muted-foreground/50" />
+          <span className="text-[10px] text-muted-foreground/50 leading-tight">
+            {label}
+          </span>
         </div>
       )}
     </div>
@@ -159,7 +186,7 @@ export function ManequimLookCard({
   const bottomItem = items.find(i => i.category === 'bottom');
   const shoesItem = items.find(i => i.category === 'shoes');
   
-  // Accessories for sides (excluding head accessories)
+  // Accessories for sides
   const sideAccessories = items.filter(i => 
     i.category === 'accessory' && 
     i.sub_category !== 'bone' && 
@@ -171,20 +198,6 @@ export function ManequimLookCard({
   const rightAccessory = sideAccessories.find(i => 
     i.sub_category === 'brinco' || i.sub_category === 'colar' || i.sub_category === 'outro'
   );
-
-  const slotContent: Partial<Record<SlotType, React.ReactNode>> = {
-    head: <DroppableSlot slotId={`${id}-head`} slotType="head" item={headItem} onRemoveItem={onRemoveItem} onAddItem={onAddItem} activeId={activeId} activeCategory={activeCategory} />,
-    shoes: <DroppableSlot slotId={`${id}-shoes`} slotType="shoes" item={shoesItem} onRemoveItem={onRemoveItem} onAddItem={onAddItem} activeId={activeId} activeCategory={activeCategory} />,
-    'accessory-left': <DroppableSlot slotId={`${id}-accessory-left`} slotType="accessory-left" item={leftAccessory} onRemoveItem={onRemoveItem} onAddItem={onAddItem} activeId={activeId} activeCategory={activeCategory} />,
-    'accessory-right': <DroppableSlot slotId={`${id}-accessory-right`} slotType="accessory-right" item={rightAccessory} onRemoveItem={onRemoveItem} onAddItem={onAddItem} activeId={activeId} activeCategory={activeCategory} />,
-  };
-
-  if (gender === 'woman' && isDressActive) {
-    slotContent.body = <DroppableSlot slotId={`${id}-body`} slotType="body" item={dressItem} onRemoveItem={onRemoveItem} onAddItem={onAddItem} activeId={activeId} activeCategory={activeCategory} />;
-  } else {
-    slotContent.top = <DroppableSlot slotId={`${id}-top`} slotType="top" item={topItem} onRemoveItem={onRemoveItem} onAddItem={onAddItem} activeId={activeId} activeCategory={activeCategory} />;
-    slotContent.bottom = <DroppableSlot slotId={`${id}-bottom`} slotType="bottom" item={bottomItem} onRemoveItem={onRemoveItem} onAddItem={onAddItem} activeId={activeId} activeCategory={activeCategory} />;
-  }
 
   return (
     <motion.div
@@ -212,53 +225,150 @@ export function ManequimLookCard({
         {/* Gender and Dress Toggles */}
         <div className="flex flex-wrap gap-4 items-center mt-1">
           <div className="flex items-center space-x-2">
-            <Label htmlFor="gender-toggle" className="text-xs text-muted-foreground">Homem</Label>
+            <Label htmlFor={`${id}-gender-toggle`} className="text-xs text-muted-foreground">Homem</Label>
             <Switch 
-              id="gender-toggle" 
+              id={`${id}-gender-toggle`} 
               checked={gender === 'woman'}
               onCheckedChange={(checked) => {
                 setGender(checked ? 'woman' : 'man');
                 if (!checked) setIsDressActive(false);
               }}
             />
-            <Label htmlFor="gender-toggle" className="text-xs text-muted-foreground">Mulher</Label>
+            <Label htmlFor={`${id}-gender-toggle`} className="text-xs text-muted-foreground">Mulher</Label>
           </div>
 
           {gender === 'woman' && (
             <div className="flex items-center space-x-2 border-l border-border/50 pl-4">
-              <Label htmlFor="dress-toggle" className="text-xs text-muted-foreground">Multi Peças</Label>
+              <Label htmlFor={`${id}-dress-toggle`} className="text-xs text-muted-foreground">Multi Peças</Label>
               <Switch 
-                id="dress-toggle" 
+                id={`${id}-dress-toggle`} 
                 checked={isDressActive}
                 onCheckedChange={setIsDressActive}
               />
-              <Label htmlFor="dress-toggle" className="text-xs text-muted-foreground">Vestido</Label>
+              <Label htmlFor={`${id}-dress-toggle`} className="text-xs text-muted-foreground">Vestido</Label>
             </div>
           )}
         </div>
       </div>
 
-      {/* Silhouette Layout */}
-      <div className="flex-1 flex items-center justify-center py-4">
-        <Silhouette 
-          gender={gender} 
-          isDressActive={isDressActive}
-          activeSlot={null as any}
-          onSlotClick={(slot) => {
-            const item = slot === 'head' ? headItem :
-                         slot === 'top' ? topItem :
-                         slot === 'bottom' ? bottomItem :
-                         slot === 'body' ? dressItem :
-                         slot === 'shoes' ? shoesItem :
-                         slot === 'accessory-left' ? leftAccessory :
-                         slot === 'accessory-right' ? rightAccessory : null;
-            if (!item) {
-              onAddItem(slot);
-            }
-          }}
-          slotContent={slotContent}
-        />
-      </div>
+      {/* Slots Layout */}
+      {gender === 'woman' && isDressActive ? (
+        /* Vestido Mode: ONLY 2 SLOTS (Vestido e Sapatos) */
+        <div className="flex-1 flex flex-col items-center justify-center gap-4 py-4">
+          <DroppableSlot
+            slotId={`${id}-body`}
+            slotType="body"
+            item={dressItem}
+            onRemoveItem={onRemoveItem}
+            onAddItem={onAddItem}
+            activeId={activeId}
+            activeCategory={activeCategory}
+            label="Vestido"
+          />
+
+          <div className="w-24">
+            <DroppableSlot
+              slotId={`${id}-shoes`}
+              slotType="shoes"
+              item={shoesItem}
+              onRemoveItem={onRemoveItem}
+              onAddItem={onAddItem}
+              activeId={activeId}
+              activeCategory={activeCategory}
+              label="Calçado"
+            />
+          </div>
+        </div>
+      ) : (
+        /* Multi Peças Mode: Original Square Slots Layout */
+        <div className="relative flex-1 flex flex-col items-center gap-2 py-2">
+          <div className="absolute inset-0 flex items-center justify-center opacity-5 pointer-events-none">
+            <User className="w-32 h-48 text-foreground" />
+          </div>
+
+          {/* Head slot */}
+          <DroppableSlot
+            slotId={`${id}-head`}
+            slotType="head"
+            item={headItem}
+            onRemoveItem={onRemoveItem}
+            onAddItem={onAddItem}
+            activeId={activeId}
+            activeCategory={activeCategory}
+            label="Boné / Óculos"
+          />
+
+          {/* Middle row: Pulso - Camisa - Jóias */}
+          <div className="flex items-center gap-2 w-full justify-center">
+            <DroppableSlot
+              slotId={`${id}-accessory-left`}
+              slotType="accessory-left"
+              item={leftAccessory}
+              onRemoveItem={onRemoveItem}
+              onAddItem={onAddItem}
+              activeId={activeId}
+              activeCategory={activeCategory}
+              label="Pulso"
+            />
+            
+            <div className="w-24">
+              <DroppableSlot
+                slotId={`${id}-top`}
+                slotType="top"
+                item={topItem}
+                onRemoveItem={onRemoveItem}
+                onAddItem={onAddItem}
+                activeId={activeId}
+                activeCategory={activeCategory}
+                label="Camisa"
+              />
+            </div>
+            
+            <DroppableSlot
+              slotId={`${id}-accessory-right`}
+              slotType="accessory-right"
+              item={rightAccessory}
+              onRemoveItem={onRemoveItem}
+              onAddItem={onAddItem}
+              activeId={activeId}
+              activeCategory={activeCategory}
+              label="Jóias"
+            />
+          </div>
+
+          {/* Bottom row: Calça */}
+          <div className="flex items-center gap-2 w-full justify-center">
+            <div className="w-16" />
+            <div className="w-24">
+              <DroppableSlot
+                slotId={`${id}-bottom`}
+                slotType="bottom"
+                item={bottomItem}
+                onRemoveItem={onRemoveItem}
+                onAddItem={onAddItem}
+                activeId={activeId}
+                activeCategory={activeCategory}
+                label="Calça"
+              />
+            </div>
+            <div className="w-16" />
+          </div>
+
+          {/* Shoes slot */}
+          <div className="w-20">
+            <DroppableSlot
+              slotId={`${id}-shoes`}
+              slotType="shoes"
+              item={shoesItem}
+              onRemoveItem={onRemoveItem}
+              onAddItem={onAddItem}
+              activeId={activeId}
+              activeCategory={activeCategory}
+              label="Calçado"
+            />
+          </div>
+        </div>
+      )}
 
       <Button
         onClick={onConfirm}
