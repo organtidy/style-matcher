@@ -130,7 +130,14 @@ export default function UploadPage() {
       };
 
       await addClothing(newItem, user?.id);
-      toast.success('Peça adicionada ao seu guarda-roupa!', { icon: '👕' });
+      if (user) {
+        toast.success('Peça salva no seu guarda-roupa na nuvem!', { icon: '👕' });
+      } else {
+        toast.info('Peça adicionada para esta sessão! Entre na sua conta para salvá-la permanentemente no banco.', {
+          icon: '💡',
+          duration: 4500,
+        });
+      }
       
       // Reset form
       setImagePreview(null);
@@ -166,6 +173,24 @@ export default function UploadPage() {
           <UploadIcon className="w-5 h-5 text-primary" />
           <h1 className="section-title">Adicionar Peça</h1>
         </div>
+
+        {/* Notice for unlogged visitors */}
+        {!user && (
+          <div className="p-3.5 rounded-xl border border-amber-500/30 bg-amber-500/10 flex items-start gap-3">
+            <span className="text-lg">💡</span>
+            <div className="space-y-0.5">
+              <p className="text-xs font-semibold text-amber-500 uppercase tracking-wide">
+                Modo Visitante (Não logado)
+              </p>
+              <p className="text-xs text-foreground/90 leading-relaxed">
+                Você pode fazer upload e testar combinações livremente nesta sessão. Suas peças <strong>não serão salvas no banco de dados</strong> até que você{' '}
+                <a href="/auth" className="underline font-medium text-amber-500 hover:text-amber-400">
+                  crie sua conta ou faça login
+                </a>.
+              </p>
+            </div>
+          </div>
+        )}
 
         {/* Image Upload Area */}
         <div className="relative">

@@ -59,6 +59,25 @@ export default function Wardrobe() {
           {cleanClothes.length} peças disponíveis
         </p>
 
+        {/* Notice for unlogged visitors */}
+        {!user && (
+          <div className="p-3.5 rounded-xl border border-amber-500/30 bg-amber-500/10 flex items-start gap-3">
+            <span className="text-lg">💡</span>
+            <div className="space-y-0.5">
+              <p className="text-xs font-semibold text-amber-500 uppercase tracking-wide">
+                Modo Visitante (Não logado)
+              </p>
+              <p className="text-xs text-foreground/90 leading-relaxed">
+                As peças desta sessão não são salvas no banco de dados.{' '}
+                <a href="/auth" className="underline font-medium text-amber-500 hover:text-amber-400">
+                  Crie sua conta ou faça login
+                </a>{' '}
+                para salvar seu guarda-roupa permanentemente na nuvem.
+              </p>
+            </div>
+          </div>
+        )}
+
         {/* Filter Chips */}
         <div className="flex gap-2 overflow-x-auto pb-2 -mx-4 px-4 scrollbar-hide">
           {(Object.keys(categoryLabels) as (ClothingCategory | 'all')[]).map(

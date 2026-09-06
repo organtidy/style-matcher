@@ -62,7 +62,7 @@ const AppRoutes = () => {
         <Route path="/api-keys" element={<Navigate to="/" replace />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
-      {user && <BottomNav />}
+      <BottomNav />
     </div>
   );
 };

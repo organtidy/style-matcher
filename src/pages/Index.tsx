@@ -4,7 +4,7 @@ import { WeatherWidget } from '@/components/WeatherWidget';
 import { DuelMode } from '@/components/DuelMode';
 import { OccasionSelector } from '@/components/OccasionSelector';
 import { motion } from 'framer-motion';
-import { Sparkles, RefreshCw, MapPin, Loader2, Wine, PlusCircle, Shirt } from 'lucide-react';
+import { Sparkles, RefreshCw, MapPin, Loader2, Wine, PlusCircle, Shirt, LogOut, LogIn } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
@@ -15,7 +15,7 @@ import { ClothingOccasion } from '@/types/clothing';
 import { useNavigate } from 'react-router-dom';
 
 const Index = () => {
-  const { user, profile } = useAuth();
+  const { user, profile, signOut } = useAuth();
   const navigate = useNavigate();
 
   const {
@@ -87,6 +87,11 @@ const Index = () => {
     }
   };
 
+  const handleLogout = async () => {
+    await signOut();
+    toast.info('Você saiu da sua conta.');
+  };
+
   const availableItems = wardrobePickerSlot && wardrobePickerLook 
     ? getAvailableItemsForSlot(wardrobePickerSlot, wardrobePickerLook)
     : [];
@@ -115,17 +120,58 @@ const Index = () => {
         animate={{ opacity: 1, y: 0 }}
         className="space-y-4"
       >
-        {/* Plan Status Badge */}
-        {profile && (
-          <div className="flex justify-end mb-1">
-            <div className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border flex items-center gap-1 ${
-              profile.plan_type === 'ultra' ? 'bg-purple-500/10 text-purple-500 border-purple-500/20' :
-              profile.plan_type === 'pro' ? 'bg-amber-500/10 text-amber-500 border-amber-500/20' :
-              'bg-muted text-muted-foreground border-border'
-            }`}>
-              {profile.plan_type === 'ultra' && <Sparkles className="w-3 h-3" />}
-              PLANO {profile.plan_type}
+        {/* User Account / Plan Status / Guest Notice Bar */}
+        <div className="flex items-center justify-between gap-2 mb-1">
+          {user ? (
+            <div className="flex items-center justify-between w-full">
+              <span className="text-xs text-muted-foreground truncate max-w-[200px]">
+                {user.email}
+              </span>
+              <div className="flex items-center gap-2">
+                <div className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border flex items-center gap-1 ${
+                  profile?.plan_type === 'ultra' ? 'bg-purple-500/10 text-purple-500 border-purple-500/20' :
+                  profile?.plan_type === 'pro' ? 'bg-amber-500/10 text-amber-500 border-amber-500/20' :
+                  'bg-muted text-muted-foreground border-border'
+                }`}>
+                  {profile?.plan_type === 'ultra' && <Sparkles className="w-3 h-3" />}
+                  PLANO {profile?.plan_type?.toUpperCase() || 'FREE'}
+                </div>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7 text-muted-foreground hover:text-foreground"
+                  title="Sair da conta"
+                  onClick={handleLogout}
+                >
+                  <LogOut className="w-3.5 h-3.5" />
+                </Button>
+              </div>
             </div>
+          ) : (
+            <div className="flex items-center justify-between w-full">
+              <span className="text-xs font-semibold text-amber-500 flex items-center gap-1.5">
+                <span>💡</span> Modo Visitante
+              </span>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => navigate('/auth')}
+                className="text-xs h-7 px-3 border-amber-500/40 text-amber-500 hover:bg-amber-500/10 gap-1.5"
+              >
+                <LogIn className="w-3.5 h-3.5" />
+                Entrar / Cadastrar
+              </Button>
+            </div>
+          )}
+        </div>
+
+        {/* Guest explanatory card when not logged in */}
+        {!user && (
+          <div className="p-3 rounded-xl border border-amber-500/30 bg-amber-500/10 flex items-center gap-2.5">
+            <span className="text-base shrink-0">👕</span>
+            <p className="text-xs text-foreground/90 leading-relaxed">
+              Você pode fazer upload de roupas e testar combinações nesta sessão. Para ter suas peças <strong className="text-amber-500">salvas no banco de dados</strong>, acesse sua conta.
+            </p>
           </div>
         )}
         {weatherLoading ? (
