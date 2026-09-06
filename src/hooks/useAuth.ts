@@ -30,29 +30,51 @@ export function useAuth() {
   };
 
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
-        setSession(session);
-        setUser(session?.user ?? null);
-        if (session?.user) {
-          fetchProfile(session.user.id);
-        } else {
-          setProfile(null);
+    let isMounted = true;
+
+    // Timeout safety fallback so app never gets stuck on Carregando...
+    const timeout = setTimeout(() => {
+      if (isMounted) setLoading(false);
+    }, 1500);
+
+    try {
+      const { data: { subscription } } = supabase.auth.onAuthStateChange(
+        (_event, session) => {
+          if (!isMounted) return;
+          setSession(session);
+          setUser(session?.user ?? null);
+          if (session?.user) {
+            fetchProfile(session.user.id);
+          } else {
+            setProfile(null);
+          }
+          setLoading(false);
         }
-        setLoading(false);
-      }
-    );
+      );
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        fetchProfile(session.user.id);
-      }
+      supabase.auth.getSession()
+        .then(({ data: { session } }) => {
+          if (!isMounted) return;
+          setSession(session);
+          setUser(session?.user ?? null);
+          if (session?.user) {
+            fetchProfile(session.user.id);
+          }
+          setLoading(false);
+        })
+        .catch(() => {
+          if (isMounted) setLoading(false);
+        });
+
+      return () => {
+        isMounted = false;
+        clearTimeout(timeout);
+        subscription?.unsubscribe();
+      };
+    } catch (e) {
       setLoading(false);
-    });
-
-    return () => subscription.unsubscribe();
+      clearTimeout(timeout);
+    }
   }, []);
 
   const signIn = async (email: string, password: string) => {
