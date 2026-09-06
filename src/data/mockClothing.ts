@@ -1,11 +1,12 @@
 import { ClothingItem, WeatherData } from '@/types/clothing';
 
 export const mockClothingItems: ClothingItem[] = [
-  // Tops
+  // --- HOMEM ---
+  // Tops (Homem)
   {
-    id: '1',
+    id: 'm-top-1',
     image_url: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=400&h=400&fit=crop',
-    description: 'Camiseta branca básica',
+    description: 'Camiseta branca básica masculina',
     warmth_level: 1,
     style_tags: ['casual', 'básico', 'minimalista'],
     last_worn: null,
@@ -14,9 +15,9 @@ export const mockClothingItems: ClothingItem[] = [
     created_at: new Date().toISOString(),
   },
   {
-    id: '2',
+    id: 'm-top-2',
     image_url: 'https://images.unsplash.com/photo-1596755094514-f87e34085b2c?w=400&h=400&fit=crop',
-    description: 'Camisa social azul',
+    description: 'Camisa social azul masculina',
     warmth_level: 2,
     style_tags: ['formal', 'elegante', 'trabalho'],
     last_worn: null,
@@ -24,22 +25,11 @@ export const mockClothingItems: ClothingItem[] = [
     status: 'clean',
     created_at: new Date().toISOString(),
   },
+  // Bottoms (Homem)
   {
-    id: '3',
-    image_url: 'https://images.unsplash.com/photo-1618354691373-d851c5c3a990?w=400&h=400&fit=crop',
-    description: 'Camiseta preta oversized',
-    warmth_level: 1,
-    style_tags: ['streetwear', 'casual', 'urbano'],
-    last_worn: null,
-    category: 'top',
-    status: 'clean',
-    created_at: new Date().toISOString(),
-  },
-  // Bottoms
-  {
-    id: '4',
+    id: 'm-bottom-1',
     image_url: 'https://images.unsplash.com/photo-1542272454315-4c01d7abdf4a?w=400&h=400&fit=crop',
-    description: 'Calça jeans escura',
+    description: 'Calça jeans escura masculina',
     warmth_level: 3,
     style_tags: ['casual', 'versátil'],
     last_worn: null,
@@ -48,9 +38,9 @@ export const mockClothingItems: ClothingItem[] = [
     created_at: new Date().toISOString(),
   },
   {
-    id: '5',
+    id: 'm-bottom-2',
     image_url: 'https://images.unsplash.com/photo-1473966968600-fa801b869a1a?w=400&h=400&fit=crop',
-    description: 'Shorts cargo bege',
+    description: 'Shorts cargo bege masculino',
     warmth_level: 1,
     style_tags: ['casual', 'verão', 'relaxado'],
     last_worn: null,
@@ -58,31 +48,9 @@ export const mockClothingItems: ClothingItem[] = [
     status: 'clean',
     created_at: new Date().toISOString(),
   },
+  // Shoes (Homem)
   {
-    id: '6',
-    image_url: 'https://images.unsplash.com/photo-1624378439575-d8705ad7ae80?w=400&h=400&fit=crop',
-    description: 'Calça de moletom preta',
-    warmth_level: 4,
-    style_tags: ['streetwear', 'confortável', 'casual'],
-    last_worn: null,
-    category: 'bottom',
-    status: 'clean',
-    created_at: new Date().toISOString(),
-  },
-  // Shoes
-  {
-    id: '7',
-    image_url: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=400&h=400&fit=crop',
-    description: 'Nike Air Max vermelho',
-    warmth_level: 2,
-    style_tags: ['esportivo', 'streetwear', 'colorido'],
-    last_worn: null,
-    category: 'shoes',
-    status: 'clean',
-    created_at: new Date().toISOString(),
-  },
-  {
-    id: '8',
+    id: 'm-shoes-1',
     image_url: 'https://images.unsplash.com/photo-1549298916-b41d501d3772?w=400&h=400&fit=crop',
     description: 'Tênis branco minimalista',
     warmth_level: 2,
@@ -92,36 +60,24 @@ export const mockClothingItems: ClothingItem[] = [
     status: 'clean',
     created_at: new Date().toISOString(),
   },
-  // Outerwear
   {
-    id: '9',
-    image_url: 'https://images.unsplash.com/photo-1551028719-00167b16eac5?w=400&h=400&fit=crop',
-    description: 'Jaqueta jeans',
-    warmth_level: 3,
-    style_tags: ['casual', 'clássico', 'versátil'],
+    id: 'm-shoes-2',
+    image_url: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=400&h=400&fit=crop',
+    description: 'Tênis esportivo vermelho',
+    warmth_level: 2,
+    style_tags: ['esportivo', 'streetwear'],
     last_worn: null,
-    category: 'outerwear',
+    category: 'shoes',
     status: 'clean',
     created_at: new Date().toISOString(),
   },
+  // Accessories (Homem)
   {
-    id: '10',
-    image_url: 'https://images.unsplash.com/photo-1591047139829-d91aecb6caea?w=400&h=400&fit=crop',
-    description: 'Moletom com capuz cinza',
-    warmth_level: 4,
-    style_tags: ['streetwear', 'confortável', 'casual'],
-    last_worn: null,
-    category: 'outerwear',
-    status: 'clean',
-    created_at: new Date().toISOString(),
-  },
-  // Accessories
-  {
-    id: '11',
+    id: 'm-acc-1',
     image_url: 'https://images.unsplash.com/photo-1588850561407-ed78c282e89b?w=400&h=400&fit=crop',
     description: 'Boné preto NY',
     warmth_level: 1,
-    style_tags: ['streetwear', 'casual', 'esportivo'],
+    style_tags: ['streetwear', 'casual'],
     last_worn: null,
     category: 'accessory',
     sub_category: 'bone',
@@ -129,26 +85,135 @@ export const mockClothingItems: ClothingItem[] = [
     created_at: new Date().toISOString(),
   },
   {
-    id: '12',
+    id: 'm-acc-2',
     image_url: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400&h=400&fit=crop',
-    description: 'Relógio prata minimalista',
+    description: 'Relógio prata masculino',
     warmth_level: 1,
-    style_tags: ['elegante', 'minimalista', 'formal'],
+    style_tags: ['elegante', 'formal'],
     last_worn: null,
     category: 'accessory',
     sub_category: 'relogio',
     status: 'clean',
     created_at: new Date().toISOString(),
   },
+
+  // --- MULHER ---
+  // Dresses (Mulher)
   {
-    id: '13',
-    image_url: 'https://images.unsplash.com/photo-1572635196237-14b3f281503f?w=400&h=400&fit=crop',
-    description: 'Óculos de sol aviador',
+    id: 'w-dress-1',
+    image_url: 'https://images.unsplash.com/photo-1572804013309-59a88b7e92f1?w=400&h=400&fit=crop',
+    description: 'Vestido longo floral de verão',
     warmth_level: 1,
-    style_tags: ['casual', 'verão', 'clássico'],
+    style_tags: ['verão', 'elegante', 'casual'],
+    last_worn: null,
+    category: 'dress',
+    sub_category: 'vestido_longo',
+    status: 'clean',
+    created_at: new Date().toISOString(),
+  },
+  {
+    id: 'w-dress-2',
+    image_url: 'https://images.unsplash.com/photo-1539008835657-9e8e9680c956?w=400&h=400&fit=crop',
+    description: 'Vestido preto clássico de festa',
+    warmth_level: 2,
+    style_tags: ['formal', 'elegante', 'noite'],
+    last_worn: null,
+    category: 'dress',
+    sub_category: 'vestido_curto',
+    status: 'clean',
+    created_at: new Date().toISOString(),
+  },
+  // Tops (Mulher)
+  {
+    id: 'w-top-1',
+    image_url: 'https://images.unsplash.com/photo-1564257631407-4deb1f99d992?w=400&h=400&fit=crop',
+    description: 'Blusa de seda rosa feminina',
+    warmth_level: 1,
+    style_tags: ['elegante', 'trabalho', 'casual'],
+    last_worn: null,
+    category: 'top',
+    status: 'clean',
+    created_at: new Date().toISOString(),
+  },
+  {
+    id: 'w-top-2',
+    image_url: 'https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?w=400&h=400&fit=crop',
+    description: 'Top cropped branco casual',
+    warmth_level: 1,
+    style_tags: ['verão', 'casual', 'streetwear'],
+    last_worn: null,
+    category: 'top',
+    status: 'clean',
+    created_at: new Date().toISOString(),
+  },
+  // Bottoms (Mulher)
+  {
+    id: 'w-bottom-1',
+    image_url: 'https://images.unsplash.com/photo-1583496661160-fb5886a0aaaa?w=400&h=400&fit=crop',
+    description: 'Saia plissada rosa chá',
+    warmth_level: 1,
+    style_tags: ['elegante', 'romântico', 'casual'],
+    last_worn: null,
+    category: 'bottom',
+    status: 'clean',
+    created_at: new Date().toISOString(),
+  },
+  {
+    id: 'w-bottom-2',
+    image_url: 'https://images.unsplash.com/photo-1541099649105-f69ad21f3246?w=400&h=400&fit=crop',
+    description: 'Calça jeans cintura alta feminina',
+    warmth_level: 2,
+    style_tags: ['casual', 'versátil'],
+    last_worn: null,
+    category: 'bottom',
+    status: 'clean',
+    created_at: new Date().toISOString(),
+  },
+  // Shoes (Mulher)
+  {
+    id: 'w-shoes-1',
+    image_url: 'https://images.unsplash.com/photo-1543163521-1bf539c55dd2?w=400&h=400&fit=crop',
+    description: 'Scarpin salto alto preto',
+    warmth_level: 2,
+    style_tags: ['formal', 'elegante', 'festa'],
+    last_worn: null,
+    category: 'shoes',
+    status: 'clean',
+    created_at: new Date().toISOString(),
+  },
+  {
+    id: 'w-shoes-2',
+    image_url: 'https://images.unsplash.com/photo-1560343776-97e7d202ff0e?w=400&h=400&fit=crop',
+    description: 'Sandália salto bloco nude',
+    warmth_level: 1,
+    style_tags: ['casual', 'elegante', 'verão'],
+    last_worn: null,
+    category: 'shoes',
+    status: 'clean',
+    created_at: new Date().toISOString(),
+  },
+  // Accessories (Mulher)
+  {
+    id: 'w-acc-1',
+    image_url: 'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=400&h=400&fit=crop',
+    description: 'Colar delicado dourado',
+    warmth_level: 1,
+    style_tags: ['elegante', 'minimalista'],
     last_worn: null,
     category: 'accessory',
-    sub_category: 'oculos',
+    sub_category: 'colar',
+    status: 'clean',
+    created_at: new Date().toISOString(),
+  },
+  {
+    id: 'w-acc-2',
+    image_url: 'https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?w=400&h=400&fit=crop',
+    description: 'Brincos de pérola clássicos',
+    warmth_level: 1,
+    style_tags: ['elegante', 'formal'],
+    last_worn: null,
+    category: 'accessory',
+    sub_category: 'brinco',
     status: 'clean',
     created_at: new Date().toISOString(),
   },
@@ -163,26 +228,28 @@ export const mockWeather: WeatherData = {
 
 // Function to generate 2 different looks from available clean clothes
 export const generateMockLooks = (clothes: ClothingItem[]) => {
-  const cleanClothes = clothes.filter(c => c.status === 'clean');
+  const cleanClothes = clothes.length > 0 ? clothes.filter(c => c.status === 'clean') : mockClothingItems;
   
   const tops = cleanClothes.filter(c => c.category === 'top');
   const bottoms = cleanClothes.filter(c => c.category === 'bottom');
   const shoes = cleanClothes.filter(c => c.category === 'shoes');
-  const outerwear = cleanClothes.filter(c => c.category === 'outerwear');
+  const dresses = cleanClothes.filter(c => c.category === 'dress');
   const accessories = cleanClothes.filter(c => c.category === 'accessory');
 
+  // Look A: Homem/Multi-peças
   const lookA = [
-    tops[0],
-    bottoms[0],
-    shoes[0],
-    accessories[0],
+    tops[0] || mockClothingItems[0],
+    bottoms[0] || mockClothingItems[2],
+    shoes[0] || mockClothingItems[4],
+    accessories[0] || mockClothingItems[6],
   ].filter(Boolean);
 
+  // Look B: Mulher/Vestido ou Multi-peças
   const lookB = [
-    tops[1] || tops[0],
-    bottoms[1] || bottoms[0],
-    shoes[1] || shoes[0],
-    accessories[1] || accessories[0],
+    dresses[0] || tops[1] || mockClothingItems[8],
+    bottoms[1] || undefined,
+    shoes[1] || shoes[0] || mockClothingItems[14],
+    accessories[1] || mockClothingItems[16],
   ].filter(Boolean);
 
   return { lookA, lookB };

@@ -168,13 +168,9 @@ export function ThreeDMannequinCanvas({
     }
   };
 
-  const slotsToRender: SlotType[] = [
-    'head',
-    ...(gender === 'woman' && isDressActive ? (['body'] as SlotType[]) : (['top', 'bottom'] as SlotType[])),
-    'shoes',
-    'accessory-left',
-    'accessory-right',
-  ];
+  const slotsToRender: SlotType[] = (gender === 'woman' && isDressActive)
+    ? ['body', 'shoes']
+    : ['head', 'top', 'bottom', 'shoes', 'accessory-left', 'accessory-right'];
 
   return (
     <div

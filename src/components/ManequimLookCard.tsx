@@ -226,7 +226,7 @@ export function ManequimLookCard({
 
           {gender === 'woman' && (
             <div className="flex items-center space-x-2 border-l border-border/50 pl-4">
-              <Label htmlFor="dress-toggle" className="text-xs text-muted-foreground">Duas Peças</Label>
+              <Label htmlFor="dress-toggle" className="text-xs text-muted-foreground">Multi Peças</Label>
               <Switch 
                 id="dress-toggle" 
                 checked={isDressActive}

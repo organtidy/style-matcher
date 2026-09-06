@@ -55,9 +55,9 @@ interface WardrobeState {
 }
 
 export const useWardrobeStore = create<WardrobeState>((set, get) => ({
-  clothes: [],
-  lookA: [],
-  lookB: [],
+  clothes: mockClothingItems,
+  lookA: mockClothingItems.slice(0, 4),
+  lookB: [mockClothingItems[8], mockClothingItems[14]], // Vestido + Sapato
   lookC: [],
   lookD: [],
   visibleLooks: ['A', 'B'] as LookId[],
@@ -101,7 +101,9 @@ export const useWardrobeStore = create<WardrobeState>((set, get) => ({
         created_at: row.created_at,
       }));
 
-      set({ clothes: userClothes });
+      // If user has clothes in database, use them. Otherwise fallback to sample mock items.
+      const finalClothes = userClothes.length > 0 ? userClothes : mockClothingItems;
+      set({ clothes: finalClothes });
       get().initializeLooks();
     } catch (err) {
       console.error('Unexpected error loading clothes:', err);
@@ -112,9 +114,9 @@ export const useWardrobeStore = create<WardrobeState>((set, get) => ({
 
   clearUserData: () => {
     set({
-      clothes: [],
-      lookA: [],
-      lookB: [],
+      clothes: mockClothingItems,
+      lookA: mockClothingItems.slice(0, 4),
+      lookB: [mockClothingItems[8], mockClothingItems[14]],
       lookC: [],
       lookD: [],
       selectedLaundryItems: [],
@@ -125,11 +127,8 @@ export const useWardrobeStore = create<WardrobeState>((set, get) => ({
 
   initializeLooks: () => {
     const { clothes } = get();
-    if (clothes.length === 0) {
-      set({ lookA: [], lookB: [], lookC: [], lookD: [] });
-      return;
-    }
-    const { lookA, lookB } = generateMockLooks(clothes);
+    const effectiveClothes = clothes.length > 0 ? clothes : mockClothingItems;
+    const { lookA, lookB } = generateMockLooks(effectiveClothes);
     set({ lookA, lookB, lookC: [], lookD: [] });
   },
 
