@@ -42,7 +42,8 @@ interface WardrobeState {
   clearLaundrySelection: () => void;
   confirmLook: (lookId: LookId) => void;
   addClothing: (item: Omit<ClothingItem, 'id' | 'created_at'>, userId?: string) => Promise<void>;
-  removeClothing: (itemId: string) => Promise<void>;
+  removeClothing: (itemId: string, userId?: string) => Promise<void>;
+  clearAllClothes: (userId?: string) => Promise<void>;
   getDirtyClothes: () => ClothingItem[];
   openWardrobePicker: (lookId: LookId, slotType: SlotType) => void;
   closeWardrobePicker: () => void;
@@ -373,9 +374,16 @@ export const useWardrobeStore = create<WardrobeState>((set, get) => ({
     set((state) => ({ clothes: [fallbackItem, ...state.clothes] }));
   },
 
-  removeClothing: async (itemId: string) => {
+  removeClothing: async (itemId: string, userId?: string) => {
     try {
-      await supabase.from('clothes').delete().eq('id', itemId);
+      let query = supabase.from('clothes').delete().eq('id', itemId);
+      if (userId) {
+        query = query.eq('user_id', userId);
+      }
+      const { error } = await query;
+      if (error) {
+        console.error('Error deleting clothing from Supabase:', error);
+      }
     } catch (err) {
       console.error('Error deleting clothing from Supabase:', err);
     }
@@ -387,6 +395,28 @@ export const useWardrobeStore = create<WardrobeState>((set, get) => ({
       lookC: state.lookC.filter(c => c.id !== itemId),
       lookD: state.lookD.filter(c => c.id !== itemId),
     }));
+  },
+
+  clearAllClothes: async (userId?: string) => {
+    try {
+      if (userId) {
+        const { error } = await supabase.from('clothes').delete().eq('user_id', userId);
+        if (error) {
+          console.error('Error deleting all clothes from Supabase:', error);
+        }
+      }
+    } catch (err) {
+      console.error('Error clearing clothes from Supabase:', err);
+    }
+
+    set({
+      clothes: [],
+      lookA: [],
+      lookB: [],
+      lookC: [],
+      lookD: [],
+      selectedLaundryItems: [],
+    });
   },
 
   getDirtyClothes: () => {

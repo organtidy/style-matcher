@@ -4,7 +4,7 @@ import { WeatherWidget } from '@/components/WeatherWidget';
 import { DuelMode } from '@/components/DuelMode';
 import { OccasionSelector } from '@/components/OccasionSelector';
 import { motion } from 'framer-motion';
-import { Sparkles, RefreshCw, MapPin, Loader2, Wine, PlusCircle, Shirt, LogOut, LogIn } from 'lucide-react';
+import { Sparkles, RefreshCw, MapPin, Loader2, Wine, PlusCircle, Shirt, LogOut, LogIn, Shuffle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
@@ -225,7 +225,7 @@ const Index = () => {
             </h2>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <Button
               onClick={handleGenerateAI}
               disabled={aiConsultantLoading || loadingClothes}
@@ -235,24 +235,25 @@ const Index = () => {
               {aiConsultantLoading ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin" />
-                  <span>Consultando IA...</span>
+                  <span>Consultando...</span>
                 </>
               ) : (
                 <>
                   <Sparkles className="w-4 h-4" />
-                  <span>Consultor IA</span>
+                  <span>Consultor</span>
                 </>
               )}
             </Button>
 
             <Button
               variant="outline"
-              size="icon"
+              size="sm"
               onClick={handleRefreshRandom}
-              title="Recombinar aleatório"
-              className="shrink-0 border-border/60 hover:text-primary"
+              title="Escolha aleatória sem IA"
+              className="border-border/60 hover:text-primary gap-1.5 flex-1 sm:flex-initial"
             >
-              <RefreshCw className="w-4 h-4" />
+              <Shuffle className="w-4 h-4" />
+              <span>Escolha Aleatória</span>
             </Button>
           </div>
         </div>
@@ -266,7 +267,7 @@ const Index = () => {
           >
             <Sparkles className="w-5 h-5 text-primary shrink-0 mt-0.5" />
             <div className="space-y-0.5">
-              <p className="text-xs font-semibold text-primary uppercase tracking-wide">Dica do Consultor IA</p>
+              <p className="text-xs font-semibold text-primary uppercase tracking-wide">Dica do Consultor</p>
               <p className="text-xs text-foreground/90 leading-relaxed">{aiTip}</p>
             </div>
           </motion.div>

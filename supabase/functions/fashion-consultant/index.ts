@@ -81,17 +81,12 @@ serve(async (req) => {
       return acc;
     }, {} as Record<string, ClothingItem[]>);
 
-    const prompt = `Você é um consultor de moda de alta costura e estilo pessoal. Analise o guarda-roupa e as condições climáticas abaixo para sugerir ${numberOfLooks} looks completos e impecáveis.
-
-## CLIMA ATUAL
-- Temperatura: ${weather.temperature}°C
-- Condição: ${weather.condition}
-- Descrição: ${weather.description}
+    const prompt = `Você é um consultor de moda e estilo pessoal. Analise as roupas limpas disponíveis no guarda-roupa e monte ${numberOfLooks} looks completos, harmônicos e elegantes para a ocasião desejada.
 
 ## ROUPAS DISPONÍVEIS (LIMPAS)
 ${Object.entries(clothesByCategory).map(([category, items]) => `
 ### ${category.toUpperCase()}
-${items.map(item => `- ID: "${item.id}" | ${item.description} | Aquecimento: ${item.warmth_level}/5 | Tags: ${(item.style_tags || []).join(', ')}`).join('\n')}`).join('\n')}
+${items.map(item => `- ID: "${item.id}" | ${item.description} | Tags: ${(item.style_tags || []).join(', ')}`).join('\n')}`).join('\n')}
 
 ## ROUPAS NA LAVANDERIA (NÃO DISPONÍVEIS)
 ${laundryItems.length > 0 ? laundryItems.map(item => `- ${item.description}`).join('\n') : 'Nenhuma'}
@@ -100,16 +95,14 @@ ${laundryItems.length > 0 ? laundryItems.map(item => `- ${item.description}`).jo
 ${occasion}
 
 ## REGRAS DE COMBINAÇÃO
-1. Cada look DEVE conter preferencialmente: top, bottom, shoes (se disponíveis no guarda-roupa)
-2. Outerwear (casaco/jaqueta) é opcional: recomende se o clima estiver frio (temp < 20°C)
-3. Accessories são opcionais para enriquecer o visual
-4. Adequação térmica:
-   - Temp < 16°C: prefira warmth_level 3-5
-   - Temp 16-24°C: prefira warmth_level 2-3
-   - Temp > 24°C: prefira warmth_level 1-2
-5. NÃO invente novos IDs! Use EXATAMENTE os IDs existentes listados nas roupas disponíveis.
-6. Explique de forma envolvente e profissional por que cada combinação foi escolhida.
-${occasion === 'especiais' ? `7. COMO É UMA OCASIÃO ESPECIAL, recomende uma harmonização de vinho com o momento e clima (com Nome do vinho, Safra e Motivo da escolha).` : ''}
+1. Cada look DEVE conter preferencialmente:
+   - Opção Multi-peças: 1 top + 1 bottom + 1 shoes
+   - Opção Vestido: 1 dress + 1 shoes
+2. Outerwear (casacos, jaquetas, blazers) e Accessories são complementos opcionais para valorizar o estilo.
+3. Foque na harmonia visual, cores, corte e adequação ao dress code da ocasião (${occasion}). O clima já é gerenciado externamente pelo usuário, portanto foque 100% na estética e elegância.
+4. NÃO invente novos IDs! Use EXATAMENTE os IDs existentes listados nas roupas disponíveis.
+5. Explique de forma envolvente e profissional por que cada combinação foi escolhida.
+${occasion === 'especiais' ? `6. COMO É UMA OCASIÃO ESPECIAL, recomende uma harmonização de vinho com a ocasião (com Nome do vinho, Safra e Motivo da escolha).` : ''}
 
 ## FORMATO DE RESPOSTA OBRIGATÓRIO (APENAS JSON PURO, SEM TEXTO EXTRA)
 {
@@ -120,11 +113,11 @@ ${occasion === 'especiais' ? `7. COMO É UMA OCASIÃO ESPECIAL, recomende uma ha
       "explanation": "Breve justificativa estilística"
     }
   ],
-  "tips": "Dica prática de estilo para o dia"${occasion === 'especiais' ? `,
+  "tips": "Dica prática de estilo para a ocasião"${occasion === 'especiais' ? `,
   "wine": {
     "name": "Nome do vinho",
     "vintage": "Safra recomendada",
-    "reason": "Por que harmoniza com a ocasião e o clima"
+    "reason": "Por que harmoniza com a ocasião"
   }` : ''}
 }`;
 
@@ -136,7 +129,7 @@ ${occasion === 'especiais' ? `7. COMO É UMA OCASIÃO ESPECIAL, recomende uma ha
       },
     };
 
-    const models = ['gemini-flash-latest', 'gemini-3.8-flash'];
+    const models = ['gemini-3.6-flash', 'gemini-flash-latest', 'gemini-3.8-flash', 'gemini-3.1-flash-lite'];
     let geminiResponseText = '';
     let lastError = '';
 

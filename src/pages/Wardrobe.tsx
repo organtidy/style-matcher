@@ -1,7 +1,7 @@
 import { useWardrobeStore } from '@/store/wardrobeStore';
 import { ClothingCategory, ClothingItem } from '@/types/clothing';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Shirt, Filter, Trash2, X } from 'lucide-react';
+import { Shirt, Filter, Trash2, X, AlertTriangle, Loader2 } from 'lucide-react';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
@@ -21,9 +21,11 @@ const categoryLabels: Record<ClothingCategory | 'all', string> = {
 
 export default function Wardrobe() {
   const { user } = useAuth();
-  const { clothes, removeClothing, loadUserClothes, loadingClothes } = useWardrobeStore();
+  const { clothes, removeClothing, clearAllClothes, loadUserClothes, loadingClothes } = useWardrobeStore();
   const [filter, setFilter] = useState<ClothingCategory | 'all'>('all');
   const [selectedItem, setSelectedItem] = useState<ClothingItem | null>(null);
+  const [clearDialogOpen, setClearDialogOpen] = useState(false);
+  const [isClearing, setIsClearing] = useState(false);
 
   useEffect(() => {
     if (user?.id && clothes.length === 0) {
@@ -38,9 +40,23 @@ export default function Wardrobe() {
       : cleanClothes.filter((c) => c.category === filter);
 
   const handleDelete = async (item: ClothingItem) => {
-    await removeClothing(item.id);
+    await removeClothing(item.id, user?.id);
     setSelectedItem(null);
-    toast.success('Peça removida do guarda-roupa!', { icon: '🗑️' });
+    toast.success('Peça removida do guarda-roupa e do banco!', { icon: '🗑️' });
+  };
+
+  const handleClearAll = async () => {
+    setIsClearing(true);
+    try {
+      await clearAllClothes(user?.id);
+      setClearDialogOpen(false);
+      toast.success('Guarda-roupa zerado com sucesso!', { icon: '🗑️' });
+    } catch (err) {
+      console.error('Error clearing wardrobe:', err);
+      toast.error('Erro ao zerar guarda-roupa.');
+    } finally {
+      setIsClearing(false);
+    }
   };
 
   return (
@@ -50,9 +66,22 @@ export default function Wardrobe() {
         animate={{ opacity: 1, y: 0 }}
         className="space-y-4"
       >
-        <div className="flex items-center gap-2">
-          <Shirt className="w-5 h-5 text-primary" />
-          <h1 className="section-title">Guarda-Roupa</h1>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Shirt className="w-5 h-5 text-primary" />
+            <h1 className="section-title">Guarda-Roupa</h1>
+          </div>
+          {clothes.length > 0 && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setClearDialogOpen(true)}
+              className="text-xs h-8 text-destructive border-destructive/30 hover:bg-destructive/10 hover:text-destructive gap-1.5"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+              Zerar Tudo
+            </Button>
+          )}
         </div>
 
         <p className="text-sm text-muted-foreground">
@@ -166,6 +195,54 @@ export default function Wardrobe() {
               </div>
             </>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Confirmation Dialog for Clearing All Clothes */}
+      <Dialog open={clearDialogOpen} onOpenChange={setClearDialogOpen}>
+        <DialogContent className="max-w-sm rounded-2xl bg-card border-border/80 p-6 space-y-4">
+          <div className="flex items-center gap-3 text-destructive">
+            <div className="w-10 h-10 rounded-full bg-destructive/10 flex items-center justify-center shrink-0">
+              <AlertTriangle className="w-5 h-5 text-destructive" />
+            </div>
+            <div>
+              <h3 className="font-semibold text-foreground text-sm">Zerar Guarda-Roupa?</h3>
+              <p className="text-xs text-muted-foreground">Esta ação não pode ser desfeita.</p>
+            </div>
+          </div>
+          <p className="text-xs text-muted-foreground leading-relaxed">
+            Todas as {clothes.length} peças serão apagadas permanentemente{user ? ' do seu banco de dados no Supabase' : ' desta sessão'}.
+          </p>
+          <div className="flex items-center justify-end gap-2 pt-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setClearDialogOpen(false)}
+              disabled={isClearing}
+              className="text-xs"
+            >
+              Cancelar
+            </Button>
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={handleClearAll}
+              disabled={isClearing}
+              className="text-xs gap-1.5"
+            >
+              {isClearing ? (
+                <>
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  <span>Apagando...</span>
+                </>
+              ) : (
+                <>
+                  <Trash2 className="w-3.5 h-3.5" />
+                  <span>Sim, apagar tudo</span>
+                </>
+              )}
+            </Button>
+          </div>
         </DialogContent>
       </Dialog>
     </div>
