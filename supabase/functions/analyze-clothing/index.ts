@@ -53,22 +53,23 @@ serve(async (req) => {
     console.log("Analyzing clothing image with Gemini Flash Vision...");
 
     const prompt = `Você é um estilista e especialista em catalogação de moda.
-Analise a imagem enviada com muita precisão e responda APENAS com um objeto JSON válido (sem texto adicional, sem formatação markdown).
+Analise a imagem enviada com extrema precisão e responda APENAS com um objeto JSON válido (sem texto adicional, sem formatação markdown).
 
-Regras de validação:
-1. Se a imagem NÃO for uma peça de vestuário, sapato, calçado ou acessório de moda (por exemplo: pessoa sem roupa evidente, animal, comida, veículo, objeto aleatório, paisagem), defina "is_clothing": false.
-2. Se for uma peça válida, defina "is_clothing": true e preencha:
-   - "category": UMA entre ["top", "bottom", "shoes", "outerwear", "accessory"]
-     * top: camisetas, camisas, blusas, regatas, tops
-     * bottom: calças, shorts, bermudas, saias, vestidos
-     * shoes: tênis, sapatos, botas, sandálias, chinelos
+Regras rigorosas de validação:
+1. Se a imagem NÃO for uma peça de vestuário, calçado ou acessório de moda vestível por seres humanos (por exemplo: brinquedos, bonecos, estátuas, colecionáveis como Baby Groot ou outros bonecos, animais, comida, veículo, objeto decorativo, paisagem), defina ESTRITAMENTE "is_clothing": false e adicione "message": "Isso não é uma peça de roupa!".
+2. Se for uma peça de moda humana válida, defina "is_clothing": true e preencha:
+   - "category": UMA entre ["top", "bottom", "shoes", "outerwear", "accessory", "dress"]
+     * dress: vestidos (curtos, longos, midi, de festa, casuais), macacões ou peças inteiriças/únicas
+     * top: camisetas, camisas, blusas, regatas, croppeds, tops
+     * bottom: calças, shorts, bermudas, saias (NUNCA vestidos ou peças inteiriças!)
+     * shoes: tênis, sapatos, saltos, botas, sandálias, chinelos
      * outerwear: jaquetas, casacos, blazers, sobretudos, moletons, cardigãs
      * accessory: bonés, chapéus, relógios, pulseiras, colares, brincos, óculos, cintos, bolsas
-   - "sub_category": se category for "accessory", escolha UMA entre ["bone", "brinco", "pulseira", "relogio", "oculos", "colar", "outro"]. Se não for acessório, use null.
-   - "description": descrição curta e elegante em português (ex: "Camisa social branca de algodão", "Calça jeans slim azul escura", "Tênis casual branco")
-   - "style_tags": array de 2 a 4 tags em português (ex: ["casual", "minimalista", "trabalho", "esportivo", "elegante", "streetwear"])
+   - "sub_category": se category for "accessory", escolha UMA entre ["bone", "brinco", "pulseira", "relogio", "oculos", "colar", "outro"]. Se for dress, use "vestido_curto" ou "vestido_longo". Se não for acessório ou dress, use null.
+   - "description": descrição curta e elegante em português (ex: "Camisa social branca de algodão", "Vestido floral midi", "Calça jeans slim azul", "Tênis casual branco")
+   - "style_tags": array de 2 a 4 tags de estilo em português (ex: ["casual", "minimalista", "trabalho", "esportivo", "elegante", "streetwear", "romântico"])
    - "warmth_level": número de 1 a 5 baseado no isolamento térmico:
-     * 1: muito leve / verão (regatas, shorts, sandálias)
+     * 1: muito leve / verão (regatas, shorts, vestidos leves, sandálias)
      * 2: leve (camisetas, camisas leves, tênis)
      * 3: médio (calça jeans, camisas manga longa, calçados fechados)
      * 4: quente (jaquetas, moletons, cardigãs)
@@ -108,8 +109,8 @@ Formato exato de resposta (JSON puro):
       }
     };
 
-    // Try gemini-flash-latest first, fallback to gemini-3.8-flash if needed
-    const models = ['gemini-flash-latest', 'gemini-3.8-flash'];
+    // Try gemini-3.6-flash first, fallback to other modern flash models
+    const models = ['gemini-3.6-flash', 'gemini-flash-latest', 'gemini-3.8-flash', 'gemini-3.1-flash-lite'];
     let geminiResponseText = '';
     let lastError = '';
 

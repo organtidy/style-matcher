@@ -28,6 +28,10 @@ interface RequestBody {
   laundryItems?: ClothingItem[];
   occasion?: string;
   numberOfLooks?: number;
+  userPreferences?: {
+    likedStyles?: string[];
+    favoriteDescriptions?: string[];
+  };
 }
 
 serve(async (req) => {
@@ -42,7 +46,8 @@ serve(async (req) => {
       weather = { temperature: 22, condition: 'Clear', description: 'agradável' },
       laundryItems = [],
       occasion = 'casual',
-      numberOfLooks = 2
+      numberOfLooks = 2,
+      userPreferences = {}
     }: RequestBody = body;
 
     const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY') || Deno.env.get('GOOGLE_AI_API_KEY');
@@ -56,10 +61,10 @@ serve(async (req) => {
 
     console.log('Received fashion consultation request:', { 
       clothesCount: clothes?.length, 
-      weather, 
       laundryCount: laundryItems?.length,
       occasion,
-      numberOfLooks 
+      numberOfLooks,
+      likedStylesCount: userPreferences?.likedStyles?.length || 0,
     });
 
     // Filter only clean clothes
@@ -81,7 +86,14 @@ serve(async (req) => {
       return acc;
     }, {} as Record<string, ClothingItem[]>);
 
-    const prompt = `Você é um consultor de moda e estilo pessoal. Analise as roupas limpas disponíveis no guarda-roupa e monte ${numberOfLooks} looks completos, harmônicos e elegantes para a ocasião desejada.
+    const userStylesText = userPreferences?.likedStyles?.length 
+      ? `O usuário já expressou que adora os seguintes estilos e estéticas: ${userPreferences.likedStyles.join(', ')}.` 
+      : '';
+    const userPiecesText = userPreferences?.favoriteDescriptions?.length 
+      ? `Peças que o usuário mais gosta ou confirmou recentemente: ${userPreferences.favoriteDescriptions.join('; ')}.`
+      : '';
+
+    const prompt = `Você é um consultor de moda e estilo pessoal personalizado. Analise as roupas limpas disponíveis no guarda-roupa e monte ${numberOfLooks} looks completos, harmônicos e elegantes para a ocasião desejada.
 
 ## ROUPAS DISPONÍVEIS (LIMPAS)
 ${Object.entries(clothesByCategory).map(([category, items]) => `
@@ -93,16 +105,23 @@ ${laundryItems.length > 0 ? laundryItems.map(item => `- ${item.description}`).jo
 
 ## OCASIÃO DESEJADA
 ${occasion}
+${userStylesText || userPiecesText ? `
+## PREFERÊNCIAS E APRENDIZADO DE ESTILO DO USUÁRIO
+${userStylesText}
+${userPiecesText}
+* DIRETRIZ DE APRENDIZADO: Aja como o Personal Stylist fiel do usuário. Priorize combinações e peças que conversem com as preferências e estilos que ele mais gosta!
+` : ''}
 
 ## REGRAS DE COMBINAÇÃO
-1. Cada look DEVE conter preferencialmente:
-   - Opção Multi-peças: 1 top + 1 bottom + 1 shoes
-   - Opção Vestido: 1 dress + 1 shoes
-2. Outerwear (casacos, jaquetas, blazers) e Accessories são complementos opcionais para valorizar o estilo.
-3. Foque na harmonia visual, cores, corte e adequação ao dress code da ocasião (${occasion}). O clima já é gerenciado externamente pelo usuário, portanto foque 100% na estética e elegância.
-4. NÃO invente novos IDs! Use EXATAMENTE os IDs existentes listados nas roupas disponíveis.
-5. Explique de forma envolvente e profissional por que cada combinação foi escolhida.
-${occasion === 'especiais' ? `6. COMO É UMA OCASIÃO ESPECIAL, recomende uma harmonização de vinho com a ocasião (com Nome do vinho, Safra e Motivo da escolha).` : ''}
+1. Cada look DEVE respeitar rigorosamente a anatomia correta das peças:
+   - Opção Multi-peças: 1 top (camisa/blusa/camiseta) + 1 bottom (calça/short/saia - NUNCA vestido!) + 1 shoes (calçado).
+   - Opção Vestido: 1 dress (vestido) + 1 shoes (calçado).
+2. NUNCA misture um vestido (dress) como parte de baixo (bottom) nem em combinação com top! Vestido é peça única de corpo inteiro.
+3. Outerwear (casacos, jaquetas, blazers) e Accessories são complementos opcionais para valorizar o visual.
+4. Foque na harmonia visual, cores, corte e adequação ao estilo do usuário e à ocasião (${occasion}).
+5. NÃO invente novos IDs! Use EXATAMENTE os IDs existentes listados nas roupas disponíveis.
+6. Explique de forma envolvente e profissional por que cada combinação foi escolhida (pode mencionar o estilo preferido dele se aplicável).
+${occasion === 'especiais' ? `7. COMO É UMA OCASIÃO ESPECIAL, recomende uma harmonização de vinho com a ocasião (com Nome do vinho, Safra e Motivo da escolha).` : ''}
 
 ## FORMATO DE RESPOSTA OBRIGATÓRIO (APENAS JSON PURO, SEM TEXTO EXTRA)
 {

@@ -4,7 +4,7 @@ import { WeatherWidget } from '@/components/WeatherWidget';
 import { DuelMode } from '@/components/DuelMode';
 import { OccasionSelector } from '@/components/OccasionSelector';
 import { motion } from 'framer-motion';
-import { Sparkles, RefreshCw, MapPin, Loader2, Wine, PlusCircle, Shirt, LogOut, LogIn, Shuffle } from 'lucide-react';
+import { Sparkles, RefreshCw, MapPin, Loader2, Wine, PlusCircle, Shirt, LogOut, LogIn, Shuffle, Heart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
@@ -25,6 +25,9 @@ const Index = () => {
     lookC,
     lookD,
     visibleLooks,
+    likedLooks,
+    toggleLikeLook,
+    userStylePreferences,
     loadUserClothes,
     loadingClothes,
     aiConsultantLoading,
@@ -61,6 +64,16 @@ const Index = () => {
     toast.success(`Look ${lookId} confirmado! Peças movidas para lavanderia.`, {
       icon: '👔',
     });
+  };
+
+  const handleToggleLike = (lookId: LookId) => {
+    const isCurrentlyLiked = likedLooks[lookId];
+    toggleLikeLook(lookId);
+    if (!isCurrentlyLiked) {
+      toast.success(`Estilo do Look ${lookId} curtido! A IA aprendeu seu gosto para as próximas recomendações.`, {
+        icon: '❤️',
+      });
+    }
   };
 
   const handleRefreshRandom = () => {
@@ -258,6 +271,23 @@ const Index = () => {
           </div>
         </div>
 
+        {/* Style Learning Badge */}
+        {userStylePreferences?.likedLookCount > 0 && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.98 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="flex items-center gap-2 px-3 py-2 rounded-xl bg-rose-500/10 border border-rose-500/20 text-xs text-foreground/90"
+          >
+            <Heart className="w-4 h-4 fill-rose-500 text-rose-500 shrink-0" />
+            <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
+              <span className="font-semibold text-rose-400">IA aprendendo seu estilo:</span>
+              <span className="text-muted-foreground">
+                Gosto favorito: <strong className="text-foreground">{userStylePreferences.likedStyles.slice(0, 4).join(', ') || 'personalizado'}</strong> ({userStylePreferences.likedLookCount} {userStylePreferences.likedLookCount === 1 ? 'look curtido' : 'looks curtidos'})
+              </span>
+            </div>
+          </motion.div>
+        )}
+
         {/* AI Tips Banner */}
         {aiTip && (
           <motion.div
@@ -326,6 +356,8 @@ const Index = () => {
         <DuelMode
           looks={looks}
           visibleLooks={visibleLooks}
+          likedLooks={likedLooks}
+          onToggleLikeLook={handleToggleLike}
           onRemoveFromLook={removeFromLook}
           onAddToLook={openWardrobePicker}
           onConfirmLook={handleConfirmLook}

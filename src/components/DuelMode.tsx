@@ -31,6 +31,8 @@ const compatibleCategories: Record<ClothingCategory, ClothingCategory[]> = {
 interface DuelModeProps {
   looks: { id: LookId; items: ClothingItem[] }[];
   visibleLooks: LookId[];
+  likedLooks?: Record<LookId, boolean>;
+  onToggleLikeLook?: (lookId: LookId) => void;
   onRemoveFromLook: (lookId: LookId, itemId: string) => void;
   onAddToLook: (lookId: LookId, slotType: SlotType) => void;
   onConfirmLook: (lookId: LookId) => void;
@@ -43,6 +45,8 @@ interface DuelModeProps {
 export function DuelMode({
   looks,
   visibleLooks,
+  likedLooks,
+  onToggleLikeLook,
   onRemoveFromLook,
   onAddToLook,
   onConfirmLook,
@@ -154,6 +158,8 @@ export function DuelMode({
               id={`look${look.id}`}
               title={`Look ${look.id}`}
               items={look.items}
+              isLiked={likedLooks?.[look.id]}
+              onLike={() => onToggleLikeLook?.(look.id)}
               onRemoveItem={(itemId) => onRemoveFromLook(look.id, itemId)}
               onAddItem={(slotType) => onAddToLook(look.id, slotType)}
               onConfirm={() => onConfirmLook(look.id)}
@@ -193,6 +199,8 @@ export function DuelMode({
                       id={`look${look.id}`}
                       title={`Look ${look.id}`}
                       items={look.items}
+                      isLiked={likedLooks?.[look.id]}
+                      onLike={() => onToggleLikeLook?.(look.id)}
                       onRemoveItem={(itemId) => onRemoveFromLook(look.id, itemId)}
                       onAddItem={(slotType) => onAddToLook(look.id, slotType)}
                       onConfirm={() => onConfirmLook(look.id)}
@@ -233,6 +241,8 @@ export function DuelMode({
                       id={`look${look.id}`}
                       title={`Look ${look.id}`}
                       items={look.items}
+                      isLiked={likedLooks?.[look.id]}
+                      onLike={() => onToggleLikeLook?.(look.id)}
                       onRemoveItem={(itemId) => onRemoveFromLook(look.id, itemId)}
                       onAddItem={(slotType) => onAddToLook(look.id, slotType)}
                       onConfirm={() => onConfirmLook(look.id)}

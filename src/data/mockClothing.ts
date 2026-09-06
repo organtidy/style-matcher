@@ -231,12 +231,12 @@ export const generateMockLooks = (clothes: ClothingItem[]) => {
   const cleanClothes = clothes.length > 0 ? clothes.filter(c => c.status === 'clean') : mockClothingItems;
   
   const tops = cleanClothes.filter(c => c.category === 'top');
-  const bottoms = cleanClothes.filter(c => c.category === 'bottom');
+  const bottoms = cleanClothes.filter(c => c.category === 'bottom' && !c.description?.toLowerCase().includes('vestido'));
   const shoes = cleanClothes.filter(c => c.category === 'shoes');
-  const dresses = cleanClothes.filter(c => c.category === 'dress');
+  const dresses = cleanClothes.filter(c => c.category === 'dress' || c.description?.toLowerCase().includes('vestido'));
   const accessories = cleanClothes.filter(c => c.category === 'accessory');
 
-  // Look A: Homem/Multi-peças
+  // Look A: Multi-peças clássico (top + bottom + shoes + acessório)
   const lookA = [
     tops[0] || mockClothingItems[0],
     bottoms[0] || mockClothingItems[2],
@@ -244,13 +244,19 @@ export const generateMockLooks = (clothes: ClothingItem[]) => {
     accessories[0] || mockClothingItems[6],
   ].filter(Boolean);
 
-  // Look B: Mulher/Vestido ou Multi-peças
-  const lookB = [
-    dresses[0] || tops[1] || mockClothingItems[8],
-    bottoms[1] || undefined,
-    shoes[1] || shoes[0] || mockClothingItems[14],
-    accessories[1] || mockClothingItems[16],
-  ].filter(Boolean);
+  // Look B: Vestido (se houver) OU Multi-peças feminino
+  const lookB = dresses.length > 0
+    ? [
+        dresses[0],
+        shoes[1] || shoes[0] || mockClothingItems[14],
+        accessories[1] || mockClothingItems[16],
+      ].filter(Boolean)
+    : [
+        tops[1] || tops[0] || mockClothingItems[10],
+        bottoms[1] || bottoms[0] || mockClothingItems[12],
+        shoes[1] || shoes[0] || mockClothingItems[14],
+        accessories[1] || mockClothingItems[16],
+      ].filter(Boolean);
 
   return { lookA, lookB };
 };

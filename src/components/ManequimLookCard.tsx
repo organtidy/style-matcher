@@ -1,8 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { ClothingItem, ClothingCategory } from '@/types/clothing';
 import { useDroppable } from '@dnd-kit/core';
 import { Button } from '@/components/ui/button';
-import { Check, X, Plus, RefreshCw, User } from 'lucide-react';
+import { Check, X, Plus, RefreshCw, User, Heart } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
@@ -157,6 +157,8 @@ interface ManequimLookCardProps {
   onAddItem: (slotType: SlotType) => void;
   onConfirm: () => void;
   onRegenerate: () => void;
+  isLiked?: boolean;
+  onLike?: () => void;
   activeId?: string | null;
   activeCategory?: ClothingCategory | null;
 }
@@ -169,20 +171,50 @@ export function ManequimLookCard({
   onAddItem,
   onConfirm,
   onRegenerate,
+  isLiked,
+  onLike,
   activeId,
   activeCategory 
 }: ManequimLookCardProps) {
-  const [isDressActive, setIsDressActive] = useState(false);
+  // Check if look contains a dress (by category or description)
+  const hasDressInItems = items.some(i => 
+    i.category === 'dress' || 
+    i.description?.toLowerCase().includes('vestido')
+  );
 
-  // Organize items by slot
+  const [isDressActive, setIsDressActive] = useState(hasDressInItems);
+
+  // Synchronize switch if items change (e.g. on new look or regeneration)
+  useEffect(() => {
+    setIsDressActive(hasDressInItems);
+  }, [hasDressInItems]);
+
+  // Organize items by slot with strict category segregation
   const headItem = items.find(i => 
     i.category === 'accessory' && 
     (i.sub_category === 'bone' || i.sub_category === 'oculos')
   );
   
-  const dressItem = items.find(i => i.category === 'dress');
-  const topItem = items.find(i => i.category === 'top' || i.category === 'outerwear');
-  const bottomItem = items.find(i => i.category === 'bottom');
+  // Dress item: category is dress OR description contains vestido
+  const dressItem = items.find(i => 
+    i.category === 'dress' || 
+    i.description?.toLowerCase().includes('vestido')
+  );
+
+  // Top item: never allow dresses as tops
+  const topItem = items.find(i => 
+    (i.category === 'top' || i.category === 'outerwear') && 
+    !i.description?.toLowerCase().includes('vestido') &&
+    i.category !== 'dress'
+  );
+
+  // Bottom item: strictly separate bottoms (calças/saias/shorts) - NEVER dresses!
+  const bottomItem = items.find(i => 
+    i.category === 'bottom' && 
+    !i.description?.toLowerCase().includes('vestido') &&
+    i.category !== 'dress'
+  );
+
   const shoesItem = items.find(i => i.category === 'shoes');
   
   // Accessories for sides
@@ -208,12 +240,29 @@ export function ManequimLookCard({
       <div className="flex flex-col gap-2 mb-3 border-b border-border/50 pb-2">
         <div className="flex items-center justify-between">
           <h3 className="font-medium text-sm text-foreground">{title}</h3>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5">
+            {onLike && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className={`h-7 px-2 text-xs flex items-center gap-1 rounded-full transition-all ${
+                  isLiked 
+                    ? 'text-rose-500 bg-rose-500/10 hover:bg-rose-500/20 font-medium' 
+                    : 'text-muted-foreground hover:text-rose-500 hover:bg-rose-500/10'
+                }`}
+                onClick={onLike}
+                title={isLiked ? "Estilo curtido! A IA vai recomendar combinações parecidas" : "Curtir este estilo para ensinar a IA"}
+              >
+                <Heart className={`w-3.5 h-3.5 ${isLiked ? 'fill-rose-500 text-rose-500' : ''}`} />
+                <span className="hidden xs:inline">{isLiked ? 'Curtido' : 'Curtir'}</span>
+              </Button>
+            )}
             <Button
               variant="ghost"
               size="icon"
-              className="h-6 w-6 text-muted-foreground hover:text-primary"
+              className="h-7 w-7 text-muted-foreground hover:text-primary"
               onClick={onRegenerate}
+              title="Gerar outra combinação"
             >
               <RefreshCw className="w-3.5 h-3.5" />
             </Button>

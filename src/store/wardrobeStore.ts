@@ -12,6 +12,26 @@ export interface WineSuggestion {
   reason: string;
 }
 
+export interface UserStylePreferences {
+  likedStyles: string[];
+  favoriteDescriptions: string[];
+  likedLookCount: number;
+}
+
+const getStoredStylePreferences = (): UserStylePreferences => {
+  try {
+    const saved = localStorage.getItem('ps_user_style_prefs');
+    if (saved) return JSON.parse(saved);
+  } catch (e) {
+    console.warn('Failed to parse stored style preferences:', e);
+  }
+  return {
+    likedStyles: [],
+    favoriteDescriptions: [],
+    likedLookCount: 0,
+  };
+};
+
 interface WardrobeState {
   clothes: ClothingItem[];
   lookA: ClothingItem[];
@@ -19,6 +39,8 @@ interface WardrobeState {
   lookC: ClothingItem[];
   lookD: ClothingItem[];
   visibleLooks: LookId[];
+  likedLooks: Record<LookId, boolean>;
+  userStylePreferences: UserStylePreferences;
   weather: typeof mockWeather;
   selectedLaundryItems: string[];
   wardrobePickerOpen: boolean;
@@ -34,6 +56,8 @@ interface WardrobeState {
   initializeLooks: () => void;
   regenerateLook: (lookId: LookId) => void;
   generateAILooks: (weather: any, occasion: string) => Promise<void>;
+  toggleLikeLook: (lookId: LookId) => void;
+  getUserStylePreferences: () => UserStylePreferences;
   moveToDirty: (ids: string[]) => Promise<void>;
   moveToClean: (ids: string[]) => Promise<void>;
   removeFromLook: (lookId: LookId, itemId: string) => void;
@@ -62,6 +86,8 @@ export const useWardrobeStore = create<WardrobeState>((set, get) => ({
   lookC: [],
   lookD: [],
   visibleLooks: ['A', 'B'] as LookId[],
+  likedLooks: { A: false, B: false, C: false, D: false },
+  userStylePreferences: getStoredStylePreferences(),
   weather: mockWeather,
   selectedLaundryItems: [],
   wardrobePickerOpen: false,
@@ -133,6 +159,48 @@ export const useWardrobeStore = create<WardrobeState>((set, get) => ({
     set({ lookA, lookB, lookC: [], lookD: [] });
   },
 
+  getUserStylePreferences: () => {
+    return get().userStylePreferences;
+  },
+
+  toggleLikeLook: (lookId: LookId) => {
+    const state = get();
+    const currentStatus = !!state.likedLooks[lookId];
+    const newStatus = !currentStatus;
+    const lookItems = state.getLook(lookId);
+
+    const currentPrefs = { ...state.userStylePreferences };
+
+    if (newStatus && lookItems.length > 0) {
+      const newTags = lookItems.flatMap(i => i.style_tags || []);
+      const descriptions = lookItems.map(i => i.description).filter(Boolean);
+
+      const allStyles = Array.from(new Set([...currentPrefs.likedStyles, ...newTags]));
+      const allDescriptions = Array.from(new Set([...currentPrefs.favoriteDescriptions, ...descriptions])).slice(-20);
+
+      const updatedPrefs: UserStylePreferences = {
+        likedStyles: allStyles,
+        favoriteDescriptions: allDescriptions,
+        likedLookCount: currentPrefs.likedLookCount + 1,
+      };
+
+      try {
+        localStorage.setItem('ps_user_style_prefs', JSON.stringify(updatedPrefs));
+      } catch (e) {
+        console.warn('Failed to save style preferences to localStorage:', e);
+      }
+
+      set({
+        likedLooks: { ...state.likedLooks, [lookId]: true },
+        userStylePreferences: updatedPrefs,
+      });
+    } else {
+      set({
+        likedLooks: { ...state.likedLooks, [lookId]: false },
+      });
+    }
+  },
+
   regenerateLook: (lookId: LookId) => {
     const state = get();
     const cleanClothes = state.clothes.filter(c => c.status === 'clean');
@@ -146,16 +214,30 @@ export const useWardrobeStore = create<WardrobeState>((set, get) => ({
     const available = cleanClothes.filter(c => !otherLooks.includes(c.id));
     const pool = available.length > 0 ? available : cleanClothes;
     
-    const tops = pool.filter(c => c.category === 'top');
-    const bottoms = pool.filter(c => c.category === 'bottom');
+    const dresses = pool.filter(c => c.category === 'dress' || c.description?.toLowerCase().includes('vestido'));
+    const tops = pool.filter(c => (c.category === 'top' || c.category === 'outerwear') && !c.description?.toLowerCase().includes('vestido'));
+    const bottoms = pool.filter(c => c.category === 'bottom' && !c.description?.toLowerCase().includes('vestido'));
     const shoes = pool.filter(c => c.category === 'shoes');
     const accessories = pool.filter(c => c.category === 'accessory');
     
     const pick = <T,>(arr: T[]) => arr.length ? arr[Math.floor(Math.random() * arr.length)] : undefined;
-    const newLook = [pick(tops), pick(bottoms), pick(shoes), pick(accessories)].filter(Boolean) as ClothingItem[];
+    
+    // Check if current look had a dress or if it's Look B with dresses available
+    const currentLook = state.getLook(lookId);
+    const currentlyHasDress = currentLook.some(i => i.category === 'dress' || i.description?.toLowerCase().includes('vestido'));
+
+    let newLook: ClothingItem[];
+    if ((currentlyHasDress || lookId === 'B') && dresses.length > 0) {
+      newLook = [pick(dresses), pick(shoes), pick(accessories)].filter(Boolean) as ClothingItem[];
+    } else {
+      newLook = [pick(tops), pick(bottoms), pick(shoes), pick(accessories)].filter(Boolean) as ClothingItem[];
+    }
     
     const lookKey = `look${lookId}` as 'lookA' | 'lookB' | 'lookC' | 'lookD';
-    set({ [lookKey]: newLook });
+    set({
+      [lookKey]: newLook,
+      likedLooks: { ...state.likedLooks, [lookId]: false },
+    });
   },
 
   generateAILooks: async (weather: any, occasion: string = 'casual') => {
@@ -168,6 +250,7 @@ export const useWardrobeStore = create<WardrobeState>((set, get) => ({
 
     set({ aiConsultantLoading: true });
     try {
+      const userPrefs = get().getUserStylePreferences();
       const { data, error } = await supabase.functions.invoke('fashion-consultant', {
         body: {
           clothes: cleanClothes,
@@ -175,6 +258,10 @@ export const useWardrobeStore = create<WardrobeState>((set, get) => ({
           laundryItems: state.getDirtyClothes(),
           occasion,
           numberOfLooks: 2,
+          userPreferences: {
+            likedStyles: userPrefs.likedStyles,
+            favoriteDescriptions: userPrefs.favoriteDescriptions,
+          },
         },
       });
 
@@ -187,6 +274,7 @@ export const useWardrobeStore = create<WardrobeState>((set, get) => ({
           lookB: looks[1]?.items || [],
           aiTip: data.tips || null,
           wineSuggestion: data.wine || null,
+          likedLooks: { A: false, B: false, C: false, D: false },
         });
         return;
       }
@@ -319,6 +407,26 @@ export const useWardrobeStore = create<WardrobeState>((set, get) => ({
     const look = state.getLook(lookId);
     const ids = look.map(item => item.id);
     
+    // Train AI on confirmed look
+    if (look.length > 0) {
+      const currentPrefs = state.userStylePreferences;
+      const newTags = look.flatMap(i => i.style_tags || []);
+      const descriptions = look.map(i => i.description).filter(Boolean);
+      const allStyles = Array.from(new Set([...currentPrefs.likedStyles, ...newTags]));
+      const allDescriptions = Array.from(new Set([...currentPrefs.favoriteDescriptions, ...descriptions])).slice(-20);
+      const updatedPrefs: UserStylePreferences = {
+        likedStyles: allStyles,
+        favoriteDescriptions: allDescriptions,
+        likedLookCount: currentPrefs.likedLookCount + 1,
+      };
+      try {
+        localStorage.setItem('ps_user_style_prefs', JSON.stringify(updatedPrefs));
+      } catch (e) {
+        console.warn('Failed to save updated style preferences to localStorage:', e);
+      }
+      set({ userStylePreferences: updatedPrefs });
+    }
+
     state.moveToDirty(ids);
     const lookKey = `look${lookId}` as 'lookA' | 'lookB' | 'lookC' | 'lookD';
     set({ [lookKey]: [] });
